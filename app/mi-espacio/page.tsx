@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/auth/LogoutButton";
+import Link from "next/link";
 
 async function PrivateContent() {
     const supabase = await createClient();
@@ -19,7 +20,7 @@ async function PrivateContent() {
 
     const { data: profile, error } = await supabase
         .from("profiles")
-        .select("display_name, approval_status")
+        .select("display_name, approval_status, role")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -43,6 +44,17 @@ async function PrivateContent() {
                 Tu cuenta fue aprobada correctamente.
                 Este es tu primer espacio protegido.
             </p>
+
+            {profile.role === "admin" && (
+                <div className="mt-8">
+                    <Link
+                        href="/admin/solicitudes"
+                        className="inline-block rounded-full bg-[#d4af37] px-7 py-3 font-semibold text-black transition hover:bg-[#e6c785]"
+                    >
+                        Panel de administración
+                    </Link>
+                </div>
+            )}
 
             <LogoutButton />
         </div>
