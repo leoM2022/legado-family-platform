@@ -67,8 +67,8 @@ export default function AwardsPage() {
                     </h2>
 
                     <p className="mx-auto mt-4 max-w-xl leading-7 text-white/60">
-                        Próximamente podrás explorar los nominados
-                        de cada categoría y participar en las votaciones.
+                        Explorá las categorías y conocé a sus nominados.
+                        Las votaciones se habilitarán próximamente.
                     </p>
                 </div>
             </main>
