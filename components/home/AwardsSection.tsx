@@ -1,6 +1,7 @@
 
 import AwardCard from "@/components/awards/AwardCard";
 import { awardCategories } from "@/data/demo/award-categories";
+import Link from "next/link";
 
 export default function AwardsSection() {
     return (
@@ -30,6 +31,16 @@ export default function AwardsSection() {
                     />
                 ))}
             </div>
+
+            <div className="mt-12 text-center">
+                <Link
+                    href="/premios"
+                    className="inline-block rounded-full border border-[#d4af37] px-8 py-4 text-[#e6c785] transition hover:bg-[#d4af37] hover:text-black"
+                >
+                    Explorar todas las ternas
+                </Link>
+            </div>
+
         </section>
     );
 }
