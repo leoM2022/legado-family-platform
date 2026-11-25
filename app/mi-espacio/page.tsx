@@ -45,6 +45,16 @@ async function PrivateContent() {
                 Este es tu primer espacio protegido.
             </p>
 
+            <div className="mt-8">
+                <Link
+                    href="/mi-espacio/editar"
+                    prefetch={false}
+                    className="inline-block rounded-full border border-[#d4af37] px-7 py-3 font-semibold text-[#e6c785] transition hover:bg-[#d4af37] hover:text-black"
+                >
+                    Editar mi perfil
+                </Link>
+            </div>
+
             {profile.role === "admin" && (
                 <div className="mt-8">
                     <Link
