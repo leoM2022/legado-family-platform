@@ -1,4 +1,3 @@
-
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -7,6 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { createClient } from "@/lib/supabase/server";
 import type { FamilyMember } from "@/types/family";
+import FamilyAvatar from "@/components/profile/FamilyAvatar";
 
 const months = [
     "enero", "febrero", "marzo", "abril",
@@ -84,8 +84,12 @@ async function MemberProfile({
         <article className="mx-auto max-w-2xl">
             <div className="rounded-3xl border border-[#d4af37]/20 bg-[#18171b] p-8 sm:p-12">
                 <div className="text-center">
-                    <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-full border border-[#d4af37]/40 bg-[#d4af37]/10 font-serif text-5xl text-[#e6c785]">
-                        {name.trim().charAt(0).toUpperCase()}
+                    <div className="mb-6">
+                        <FamilyAvatar
+                            avatarPath={member.avatar_path}
+                            name={name}
+                            size={112}
+                        />
                     </div>
 
                     <h1 className="font-serif text-4xl text-[#e6c785]">

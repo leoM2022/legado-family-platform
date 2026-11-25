@@ -9,4 +9,5 @@ export type FamilyMember = {
     favorite_food: string | null;
     favorite_color: string | null;
     currently_into: string | null;
+    avatar_path: string | null;
 };
