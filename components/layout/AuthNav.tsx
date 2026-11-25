@@ -84,6 +84,16 @@ export default async function AuthNav() {
                 </Link>
             )}
 
+            {approved && (
+                <Link
+                    href="/comunidad"
+                    prefetch={false}
+                    className="rounded-full border border-[#d4af37]/50 px-5 py-2 text-sm text-[#e6c785]"
+                >
+                    Comunidad
+                </Link>
+            )}
+
             <LogoutButton compact />
         </div>
     );
