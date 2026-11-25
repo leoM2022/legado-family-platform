@@ -16,6 +16,7 @@ export type ProfileData = {
     show_birthday: boolean;
     show_status: boolean;
     show_favorites: boolean;
+    show_in_directory: boolean;
 };
 
 interface ProfileEditorProps {
@@ -35,7 +36,8 @@ type VisibilityKey =
     | "show_nickname"
     | "show_birthday"
     | "show_status"
-    | "show_favorites";
+    | "show_favorites"
+    | "show_in_directory";
 
 const visibilityOptions: {
     key: VisibilityKey;
@@ -56,6 +58,10 @@ const visibilityOptions: {
     {
         key: "show_favorites",
         label: "Compartir mis gustos y favoritos",
+    },
+    {
+        key: "show_in_directory",
+        label: "Mostrar mi perfil en el directorio familiar",
     },
 ];
 

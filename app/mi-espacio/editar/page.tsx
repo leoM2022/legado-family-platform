@@ -61,6 +61,7 @@ async function EditProfileContent() {
         show_birthday: details?.show_birthday ?? false,
         show_status: details?.show_status ?? false,
         show_favorites: details?.show_favorites ?? false,
+        show_in_directory: details?.show_in_directory ?? false,
     };
 
     return (
