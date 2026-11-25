@@ -66,6 +66,16 @@ export default async function AuthNav() {
 
             {approved && (
                 <Link
+                    href="/familia"
+                    prefetch={false}
+                    className="rounded-full border border-[#d4af37]/50 px-5 py-2 text-sm text-[#e6c785]"
+                >
+                    Nuestra familia
+                </Link>
+            )}
+
+            {approved && (
+                <Link
                     href="/cumpleanos"
                     prefetch={false}
                     className="rounded-full border border-[#d4af37]/50 px-5 py-2 text-sm text-[#e6c785]"
