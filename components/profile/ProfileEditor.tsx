@@ -17,6 +17,8 @@ export type ProfileData = {
     show_status: boolean;
     show_favorites: boolean;
     show_in_directory: boolean;
+    show_avatar: boolean;
+    allow_awards_avatar: boolean;
 };
 
 interface ProfileEditorProps {
@@ -37,7 +39,9 @@ type VisibilityKey =
     | "show_birthday"
     | "show_status"
     | "show_favorites"
-    | "show_in_directory";
+    | "show_in_directory"
+    | "show_avatar"
+    | "allow_awards_avatar";
 
 const visibilityOptions: {
     key: VisibilityKey;
@@ -62,6 +66,14 @@ const visibilityOptions: {
     {
         key: "show_in_directory",
         label: "Mostrar mi perfil en el directorio familiar",
+    },
+    {
+        key: "show_avatar",
+        label: "Mostrar mi fotografía en el directorio familiar",
+    },
+    {
+        key: "allow_awards_avatar",
+        label: "Permitir usar mi fotografía en las premiaciones",
     },
 ];
 

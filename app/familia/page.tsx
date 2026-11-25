@@ -1,4 +1,3 @@
-
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -7,6 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { createClient } from "@/lib/supabase/server";
 import type { FamilyMember } from "@/types/family";
+import FamilyAvatar from "@/components/profile/FamilyAvatar";
 
 async function FamilyDirectory() {
     const supabase = await createClient();
@@ -92,8 +92,12 @@ async function FamilyDirectory() {
                             href={`/familia/${member.user_id}`}
                             className="group rounded-2xl border border-[#d4af37]/20 bg-[#18171b] p-8 text-center transition hover:border-[#d4af37]/70 hover:bg-[#211d1b]"
                         >
-                            <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border border-[#d4af37]/40 bg-[#d4af37]/10 font-serif text-4xl text-[#e6c785]">
-                                {name.trim().charAt(0).toUpperCase()}
+                            <div className="mb-6">
+                                <FamilyAvatar
+                                    avatarPath={member.avatar_path}
+                                    name={name}
+                                    size={96}
+                                />
                             </div>
 
                             <h2 className="font-serif text-2xl text-[#e6c785]">
