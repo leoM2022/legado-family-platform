@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import ProfileEditor, {
     type ProfileData,
 } from "@/components/profile/ProfileEditor";
+import AvatarUploader from "@/components/profile/AvatarUploader";
 
 async function EditProfileContent() {
     const supabase = await createClient();
@@ -62,6 +63,8 @@ async function EditProfileContent() {
         show_status: details?.show_status ?? false,
         show_favorites: details?.show_favorites ?? false,
         show_in_directory: details?.show_in_directory ?? false,
+        show_avatar: details?.show_avatar ?? false,
+        allow_awards_avatar: details?.allow_awards_avatar ?? false,
     };
 
     return (
@@ -71,8 +74,13 @@ async function EditProfileContent() {
                     Nombre de cuenta: {profile.display_name}
                 </p>
             </div>
-
-            <ProfileEditor initialProfile={initialProfile} />
+            <AvatarUploader
+                initialPath={details?.avatar_path ?? null}
+            />
+            <ProfileEditor
+                key={details?.avatar_path ?? "sin-avatar"}
+                initialProfile={initialProfile}
+            />
         </>
     );
 }
