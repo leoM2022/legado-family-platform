@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import ModerationForm from "@/components/community/ModerationForm";
 import { createClient } from "@/lib/supabase/server";
 
 import {
@@ -13,6 +14,7 @@ import {
     deleteComment,
     reactToPost,
     removeReaction,
+    editFamilyContent,
 } from "./actions";
 
 type FamilyPost = {
@@ -67,7 +69,7 @@ async function CommunityFeed() {
     const { data: profile, error: profileError } =
         await supabase
             .from("profiles")
-            .select("approval_status")
+            .select("approval_status, role")
             .eq("id", user.id)
             .maybeSingle();
 
@@ -79,12 +81,15 @@ async function CommunityFeed() {
         redirect("/pendiente");
     }
 
-    // Obtener las publicaciones familiares.
+    // Identificar al administrador.
+    const isAdmin = profile.role === "admin";
+
+    // Obtener publicaciones.
     const { data: feedData, error: feedError } =
         await supabase.rpc("get_family_feed");
 
     if (feedError) {
-        console.error(feedError.message);
+        console.error("Error del muro:", feedError.message);
 
         return (
             <p role="alert" className="text-red-400">
@@ -99,8 +104,7 @@ async function CommunityFeed() {
     let comments: FamilyComment[] = [];
     let reactions: FamilyReaction[] = [];
 
-    // Consultamos interacciones únicamente de los
-    // posts que aparecen en el muro.
+    // Obtener comentarios y reacciones.
     if (postIds.length > 0) {
         const [commentsResult, reactionsResult] =
             await Promise.all([
@@ -116,7 +120,7 @@ async function CommunityFeed() {
 
         if (commentsResult.error || reactionsResult.error) {
             console.error(
-                "Error al cargar interacciones:",
+                "Error de interacciones:",
                 commentsResult.error?.message,
                 reactionsResult.error?.message
             );
@@ -129,17 +133,18 @@ async function CommunityFeed() {
             );
         }
 
-        comments =
-            (commentsResult.data ?? []) as FamilyComment[];
+        comments = (commentsResult.data ?? []) as FamilyComment[];
 
-        reactions =
-            (reactionsResult.data ?? []) as FamilyReaction[];
+        reactions = (reactionsResult.data ?? []) as FamilyReaction[];
     }
 
     return (
         <div className="mx-auto max-w-2xl space-y-8">
 
-            {/* Crear publicación */}
+            {/* ===================================
+          1. CREAR PUBLICACIÓN
+      =================================== */}
+
             <section className="rounded-2xl border border-[#d4af37]/20 bg-[#18171b] p-6">
                 <h2 className="mb-5 font-serif text-2xl text-[#e6c785]">
                     Compartir un momento
@@ -176,7 +181,10 @@ async function CommunityFeed() {
                 </form>
             </section>
 
-            {/* Muro */}
+            {/* ===================================
+          2. PUBLICACIONES
+      =================================== */}
+
             <section className="space-y-6">
                 <h2 className="font-serif text-2xl">
                     Publicaciones recientes
@@ -190,17 +198,17 @@ async function CommunityFeed() {
 
                 {posts.map((post) => {
                     const postComments = comments
-                        .filter((c) => c.post_id === post.post_id)
+                        .filter((comment) => comment.post_id === post.post_id)
                         .sort((a, b) =>
                             a.created_at.localeCompare(b.created_at)
                         );
 
                     const postReactions = reactions.filter(
-                        (r) => r.post_id === post.post_id
+                        (reaction) => reaction.post_id === post.post_id
                     );
 
                     const myReaction = postReactions.find(
-                        (r) => r.user_id === user.id
+                        (reaction) => reaction.user_id === user.id
                     );
 
                     return (
@@ -208,7 +216,9 @@ async function CommunityFeed() {
                             key={post.post_id}
                             className="rounded-2xl border border-white/10 bg-[#18171b] p-6"
                         >
-                            {/* Autor */}
+
+                            {/* AUTOR DE LA PUBLICACIÓN */}
+
                             <header className="mb-5">
                                 <h3 className="font-semibold text-[#e6c785]">
                                     {post.author_name}
@@ -219,17 +229,66 @@ async function CommunityFeed() {
                                 </p>
                             </header>
 
-                            {/* Contenido */}
+                            {/* CONTENIDO DE LA PUBLICACIÓN */}
+
                             <p className="whitespace-pre-wrap break-words leading-7 text-white/80">
                                 {post.content}
                             </p>
 
-                            {/* Reacciones */}
+                            {/* ===================================
+                  3. EDITAR PUBLICACIÓN PROPIA
+              =================================== */}
+
+                            {post.author_id === user.id && (
+                                <details className="mt-5">
+                                    <summary className="cursor-pointer text-sm text-[#e6c785]">
+                                        Editar publicación
+                                    </summary>
+
+                                    <form
+                                        action={editFamilyContent}
+                                        className="mt-4 space-y-3"
+                                    >
+                                        <input
+                                            type="hidden"
+                                            name="kind"
+                                            value="post"
+                                        />
+
+                                        <input
+                                            type="hidden"
+                                            name="id"
+                                            value={post.post_id}
+                                        />
+
+                                        <textarea
+                                            name="content"
+                                            defaultValue={post.content}
+                                            required
+                                            maxLength={1200}
+                                            rows={4}
+                                            className="w-full rounded-xl border border-white/20 bg-[#0b0b0d] p-3 text-white"
+                                        />
+
+                                        <button
+                                            type="submit"
+                                            className="rounded-full bg-[#d4af37] px-5 py-2 text-sm font-semibold text-black"
+                                        >
+                                            Guardar cambios
+                                        </button>
+                                    </form>
+                                </details>
+                            )}
+
+                            {/* ===================================
+                  4. REACCIONES
+              =================================== */}
+
                             <div className="mt-6 flex flex-wrap gap-3 border-t border-white/10 pt-5">
                                 {reactionOptions.map((option) => {
                                     const count = postReactions.filter(
-                                        (r) =>
-                                            r.reaction_type === option.value
+                                        (reaction) =>
+                                            reaction.reaction_type === option.value
                                     ).length;
 
                                     const selected =
@@ -281,7 +340,10 @@ async function CommunityFeed() {
                                 )}
                             </div>
 
-                            {/* Comentarios */}
+                            {/* ===================================
+                  5. COMENTARIOS
+              =================================== */}
+
                             <div className="mt-7 border-t border-white/10 pt-6">
                                 <h4 className="mb-5 font-semibold text-[#e6c785]">
                                     Comentarios ({postComments.length})
@@ -293,6 +355,9 @@ async function CommunityFeed() {
                                             key={comment.comment_id}
                                             className="rounded-xl bg-[#242127] p-4"
                                         >
+
+                                            {/* AUTOR Y FECHA DEL COMENTARIO */}
+
                                             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                                                 <p className="text-sm font-semibold text-[#e6c785]">
                                                     {comment.author_name}
@@ -303,9 +368,58 @@ async function CommunityFeed() {
                         </span>
                                             </div>
 
+                                            {/* TEXTO DEL COMENTARIO */}
+
                                             <p className="whitespace-pre-wrap break-words text-sm text-white/80">
                                                 {comment.content}
                                             </p>
+
+                                            {/* ===================================
+                          6. EDITAR COMENTARIO PROPIO
+                      =================================== */}
+
+                                            {comment.author_id === user.id && (
+                                                <details className="mt-3">
+                                                    <summary className="cursor-pointer text-xs text-[#e6c785]">
+                                                        Editar comentario
+                                                    </summary>
+
+                                                    <form
+                                                        action={editFamilyContent}
+                                                        className="mt-3 space-y-2"
+                                                    >
+                                                        <input
+                                                            type="hidden"
+                                                            name="kind"
+                                                            value="comment"
+                                                        />
+
+                                                        <input
+                                                            type="hidden"
+                                                            name="id"
+                                                            value={comment.comment_id}
+                                                        />
+
+                                                        <textarea
+                                                            name="content"
+                                                            defaultValue={comment.content}
+                                                            required
+                                                            maxLength={500}
+                                                            rows={3}
+                                                            className="w-full rounded-xl border border-white/20 bg-[#0b0b0d] p-3 text-sm text-white"
+                                                        />
+
+                                                        <button
+                                                            type="submit"
+                                                            className="rounded-full bg-[#d4af37] px-4 py-2 text-xs font-semibold text-black"
+                                                        >
+                                                            Guardar comentario
+                                                        </button>
+                                                    </form>
+                                                </details>
+                                            )}
+
+                                            {/* ELIMINAR COMENTARIO PROPIO */}
 
                                             {comment.author_id === user.id && (
                                                 <form
@@ -326,11 +440,28 @@ async function CommunityFeed() {
                                                     </button>
                                                 </form>
                                             )}
+
+                                            {/* ===================================
+                          7. MODERAR COMENTARIO AJENO
+                          SOLO ADMINISTRADORES
+                      =================================== */}
+
+                                            {isAdmin &&
+                                                comment.author_id !== user.id && (
+                                                    <ModerationForm
+                                                        kind="comment"
+                                                        id={comment.comment_id}
+                                                    />
+                                                )}
+
                                         </div>
                                     ))}
                                 </div>
 
-                                {/* Agregar comentario */}
+                                {/* ===================================
+                    8. AGREGAR COMENTARIO
+                =================================== */}
+
                                 <form
                                     action={createComment}
                                     className="mt-5 space-y-3"
@@ -367,7 +498,10 @@ async function CommunityFeed() {
                                 </form>
                             </div>
 
-                            {/* Borrar publicación propia */}
+                            {/* ===================================
+                  9. ELIMINAR PUBLICACIÓN PROPIA
+              =================================== */}
+
                             {post.author_id === user.id && (
                                 <form
                                     action={deletePost}
@@ -387,6 +521,20 @@ async function CommunityFeed() {
                                     </button>
                                 </form>
                             )}
+
+                            {/* ===================================
+                  10. MODERAR PUBLICACIÓN AJENA
+                  SOLO ADMINISTRADORES
+              =================================== */}
+
+                            {isAdmin &&
+                                post.author_id !== user.id && (
+                                    <ModerationForm
+                                        kind="post"
+                                        id={post.post_id}
+                                    />
+                                )}
+
                         </article>
                     );
                 })}

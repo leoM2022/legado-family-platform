@@ -8,6 +8,13 @@ import Footer from "@/components/layout/Footer";
 import { createClient } from "@/lib/supabase/server";
 import { reviewRegistration } from "./actions";
 
+type PendingRequest = {
+    user_id: string;
+    display_name: string;
+    email: string;
+    requested_at: string;
+};
+
 async function PendingRequests() {
     const supabase = await createClient();
 
@@ -50,7 +57,8 @@ async function PendingRequests() {
         );
     }
 
-    const pending = requests ?? [];
+    const pending: PendingRequest[] =
+        (requests ?? []) as PendingRequest[];
 
     return (
         <section>
