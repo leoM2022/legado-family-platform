@@ -4,6 +4,12 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+const UUID_PATTERN =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+type TargetKind = "post" | "comment";
+
+// Verificar usuario y aprobación.
 async function getApprovedUser() {
     const supabase = await createClient();
 
@@ -16,31 +22,97 @@ async function getApprovedUser() {
         throw new Error("Debés iniciar sesión.");
     }
 
-    const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("approval_status, role")
-        .eq("id", user.id)
-        .single();
+    const { data: profile, error: profileError } =
+        await supabase
+            .from("profiles")
+            .select("approval_status, role")
+            .eq("id", user.id)
+            .maybeSingle();
 
-    if (error || profile.approval_status !== "approved") {
+    if (
+        profileError ||
+        profile?.approval_status !== "approved"
+    ) {
         throw new Error("Tu cuenta no está aprobada.");
     }
 
-    return { supabase, user, role: profile.role };
+    return {
+        supabase,
+        user,
+        role: profile.role,
+    };
 }
 
-export async function createPost(formData: FormData) {
-    const content = formData.get("content");
+// Validar identificadores.
+function requireUUID(
+    value: FormDataEntryValue | null
+): string {
+    if (
+        typeof value !== "string" ||
+        !UUID_PATTERN.test(value)
+    ) {
+        throw new Error("Identificador inválido.");
+    }
+
+    return value;
+}
+
+// Identificar publicación o comentario.
+function requireTarget(
+    formData: FormData
+): {
+    kind: TargetKind;
+    id: string;
+} {
+    const kind = formData.get("kind");
 
     if (
-        typeof content !== "string" ||
-        content.trim().length < 1 ||
-        content.trim().length > 1200
+        kind !== "post" &&
+        kind !== "comment"
+    ) {
+        throw new Error("Tipo de contenido inválido.");
+    }
+
+    return {
+        kind,
+        id: requireUUID(formData.get("id")),
+    };
+}
+
+// Validar texto recibido del formulario.
+function requireContent(
+    value: FormDataEntryValue | null,
+    maxLength: number
+): string {
+    if (typeof value !== "string") {
+        throw new Error("El contenido es inválido.");
+    }
+
+    const content = value.trim();
+
+    if (
+        content.length < 1 ||
+        content.length > maxLength
     ) {
         throw new Error(
-            "La publicación debe tener entre 1 y 1200 caracteres."
+            `El texto debe tener entre 1 y ${maxLength} caracteres.`
         );
     }
+
+    return content;
+}
+
+// ==========================================
+// 1. PUBLICAR TEXTO
+// ==========================================
+
+export async function createPost(
+    formData: FormData
+) {
+    const content = requireContent(
+        formData.get("content"),
+        1200
+    );
 
     const { supabase, user } = await getApprovedUser();
 
@@ -48,29 +120,54 @@ export async function createPost(formData: FormData) {
         .from("family_posts")
         .insert({
             author_id: user.id,
-            content: content.trim(),
+            content,
         });
 
     if (error) {
-        console.error("Error al publicar:", error.message);
-        throw new Error("No se pudo guardar la publicación.");
+        console.error(
+            "Error al publicar:",
+            error.message
+        );
+
+        throw new Error(
+            "No se pudo guardar la publicación."
+        );
     }
 
     revalidatePath("/comunidad");
 }
 
-export async function deletePost(formData: FormData) {
-    const postId = formData.get("postId");
+// ==========================================
+// 2. ELIMINAR PUBLICACIÓN PROPIA
+// ==========================================
 
-    if (
-        typeof postId !== "string" ||
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(postId)
-    ) {
-        throw new Error("Identificador inválido.");
-    }
+export async function deletePost(
+    formData: FormData
+) {
+    const postId = requireUUID(
+        formData.get("postId")
+    );
 
     const { supabase, user } = await getApprovedUser();
 
+    // Recuperar la ruta de la foto antes de borrar.
+    const {
+        data: original,
+        error: readError,
+    } = await supabase
+        .from("family_posts")
+        .select("image_path")
+        .eq("id", postId)
+        .eq("author_id", user.id)
+        .maybeSingle();
+
+    if (readError) {
+        throw new Error(
+            "No se pudo consultar la publicación."
+        );
+    }
+
+    // Eliminar la publicación.
     const { error } = await supabase
         .from("family_posts")
         .delete()
@@ -78,26 +175,49 @@ export async function deletePost(formData: FormData) {
         .eq("author_id", user.id);
 
     if (error) {
-        console.error("Error al eliminar:", error.message);
-        throw new Error("No se pudo eliminar la publicación.");
+        console.error(
+            "Error al eliminar publicación:",
+            error.message
+        );
+
+        throw new Error(
+            "No se pudo eliminar la publicación."
+        );
+    }
+
+    // Limpiar el archivo de Storage si tenía imagen.
+    if (original?.image_path) {
+        const { error: cleanupError } =
+            await supabase.storage
+                .from("family-post-images")
+                .remove([original.image_path]);
+
+        if (cleanupError) {
+            console.error(
+                "Imagen pendiente de limpieza:",
+                cleanupError.message
+            );
+        }
     }
 
     revalidatePath("/comunidad");
 }
 
+// ==========================================
+// 3. CREAR COMENTARIO
+// ==========================================
 
-export async function createComment(formData: FormData) {
-    const postId = formData.get("postId");
-    const content = formData.get("content");
+export async function createComment(
+    formData: FormData
+) {
+    const postId = requireUUID(
+        formData.get("postId")
+    );
 
-    if (
-        typeof postId !== "string" ||
-        typeof content !== "string" ||
-        content.trim().length < 1 ||
-        content.trim().length > 500
-    ) {
-        throw new Error("Comentario inválido.");
-    }
+    const content = requireContent(
+        formData.get("content"),
+        500
+    );
 
     const { supabase, user } = await getApprovedUser();
 
@@ -106,23 +226,33 @@ export async function createComment(formData: FormData) {
         .insert({
             post_id: postId,
             author_id: user.id,
-            content: content.trim(),
+            content,
         });
 
     if (error) {
-        console.error("Error al comentar:", error.message);
-        throw new Error("No se pudo publicar el comentario.");
+        console.error(
+            "Error al crear comentario:",
+            error.message
+        );
+
+        throw new Error(
+            "No se pudo publicar el comentario."
+        );
     }
 
     revalidatePath("/comunidad");
 }
 
-export async function deleteComment(formData: FormData) {
-    const commentId = formData.get("commentId");
+// ==========================================
+// 4. ELIMINAR COMENTARIO PROPIO
+// ==========================================
 
-    if (typeof commentId !== "string") {
-        throw new Error("Comentario inválido.");
-    }
+export async function deleteComment(
+    formData: FormData
+) {
+    const commentId = requireUUID(
+        formData.get("commentId")
+    );
 
     const { supabase, user } = await getApprovedUser();
 
@@ -133,22 +263,36 @@ export async function deleteComment(formData: FormData) {
         .eq("author_id", user.id);
 
     if (error) {
-        throw new Error("No se pudo eliminar el comentario.");
+        console.error(
+            "Error al eliminar comentario:",
+            error.message
+        );
+
+        throw new Error(
+            "No se pudo eliminar el comentario."
+        );
     }
 
     revalidatePath("/comunidad");
 }
 
-export async function reactToPost(formData: FormData) {
-    const postId = formData.get("postId");
+// ==========================================
+// 5. REACCIONAR A UNA PUBLICACIÓN
+// ==========================================
+
+export async function reactToPost(
+    formData: FormData
+) {
+    const postId = requireUUID(
+        formData.get("postId")
+    );
+
     const reaction = formData.get("reaction");
 
-    const allowed = ["like", "love", "laugh"];
-
     if (
-        typeof postId !== "string" ||
-        typeof reaction !== "string" ||
-        !allowed.includes(reaction)
+        reaction !== "like" &&
+        reaction !== "love" &&
+        reaction !== "laugh"
     ) {
         throw new Error("Reacción inválida.");
     }
@@ -169,22 +313,29 @@ export async function reactToPost(formData: FormData) {
         );
 
     if (error) {
-        console.error("Error al reaccionar:", error.message);
-        throw new Error("No se pudo guardar la reacción.");
+        console.error(
+            "Error al reaccionar:",
+            error.message
+        );
+
+        throw new Error(
+            "No se pudo guardar la reacción."
+        );
     }
 
     revalidatePath("/comunidad");
 }
 
-export async function removeReaction(formData: FormData) {
-    const postId = formData.get("postId");
+// ==========================================
+// 6. QUITAR UNA REACCIÓN
+// ==========================================
 
-    if (
-        typeof postId !== "string" ||
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(postId)
-    ) {
-        throw new Error("Publicación inválida.");
-    }
+export async function removeReaction(
+    formData: FormData
+) {
+    const postId = requireUUID(
+        formData.get("postId")
+    );
 
     const { supabase, user } = await getApprovedUser();
 
@@ -195,47 +346,32 @@ export async function removeReaction(formData: FormData) {
         .eq("user_id", user.id);
 
     if (error) {
-        console.error("Error al quitar reacción:", error.message);
-        throw new Error("No se pudo quitar la reacción.");
+        console.error(
+            "Error al quitar reacción:",
+            error.message
+        );
+
+        throw new Error(
+            "No se pudo quitar la reacción."
+        );
     }
 
     revalidatePath("/comunidad");
 }
 
-const UUID_PATTERN =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+// ==========================================
+// 7. EDITAR PUBLICACIÓN O COMENTARIO
+// ==========================================
 
-function parseContentTarget(formData: FormData) {
-    const kind = formData.get("kind");
-    const id = formData.get("id");
-
-    if (
-        (kind !== "post" && kind !== "comment") ||
-        typeof id !== "string" ||
-        !UUID_PATTERN.test(id)
-    ) {
-        throw new Error("Contenido inválido.");
-    }
-
-    return { kind, id };
-}
-
-// Editar contenido propio
 export async function editFamilyContent(
     formData: FormData
 ) {
-    const { kind, id } = parseContentTarget(formData);
-    const content = formData.get("content");
+    const { kind, id } = requireTarget(formData);
 
-    const maxLength = kind === "post" ? 1200 : 500;
-
-    if (
-        typeof content !== "string" ||
-        content.trim().length < 1 ||
-        content.trim().length > maxLength
-    ) {
-        throw new Error("El texto no cumple los límites.");
-    }
+    const content = requireContent(
+        formData.get("content"),
+        kind === "post" ? 1200 : 500
+    );
 
     const { supabase } = await getApprovedUser();
 
@@ -244,25 +380,33 @@ export async function editFamilyContent(
         {
             p_kind: kind,
             p_id: id,
-            p_content: content.trim(),
+            p_content: content,
         }
     );
 
     if (error) {
-        console.error("Error al editar:", error.message);
+        console.error(
+            "Error al editar contenido:",
+            error.message
+        );
+
         throw new Error(
-            "No se pudo editar el contenido. Comprobá tus permisos."
+            "No se pudo editar. Comprobá tus permisos."
         );
     }
 
     revalidatePath("/comunidad");
 }
 
-// Retirar contenido desde administración
+// ==========================================
+// 8. MODERAR CONTENIDO
+// ==========================================
+
 export async function moderateFamilyContent(
     formData: FormData
 ) {
-    const { kind, id } = parseContentTarget(formData);
+    const { kind, id } = requireTarget(formData);
+
     const reason = formData.get("reason");
 
     if (
@@ -271,7 +415,7 @@ export async function moderateFamilyContent(
         reason.trim().length > 200
     ) {
         throw new Error(
-            "Ingresá un motivo de entre 5 y 200 caracteres."
+            "El motivo debe tener entre 5 y 200 caracteres."
         );
     }
 
@@ -281,7 +425,30 @@ export async function moderateFamilyContent(
         throw new Error("Acceso no autorizado.");
     }
 
-    // La función SQL comprueba nuevamente el rol.
+    // Consultar ruta de la fotografía si se retira un post.
+    let imagePath: string | null = null;
+
+    if (kind === "post") {
+        const {
+            data,
+            error: imageError,
+        } = await supabase.rpc(
+            "admin_get_post_image_path",
+            {
+                p_post_id: id,
+            }
+        );
+
+        if (imageError) {
+            throw new Error(
+                "No se pudo verificar la imagen del post."
+            );
+        }
+
+        imagePath = data as string | null;
+    }
+
+    // Moderar y registrar el motivo.
     const { error } = await supabase.rpc(
         "moderate_family_content",
         {
@@ -292,11 +459,30 @@ export async function moderateFamilyContent(
     );
 
     if (error) {
-        console.error("Error de moderación:", error.message);
-        throw new Error("No se pudo moderar el contenido.");
+        console.error(
+            "Error al moderar contenido:",
+            error.message
+        );
+
+        throw new Error(
+            "No se pudo moderar el contenido."
+        );
+    }
+
+    // Si había foto, solicitar su eliminación.
+    if (imagePath) {
+        const { error: cleanupError } =
+            await supabase.storage
+                .from("family-post-images")
+                .remove([imagePath]);
+
+        if (cleanupError) {
+            console.error(
+                "Imagen moderada pendiente de limpieza:",
+                cleanupError.message
+            );
+        }
     }
 
     revalidatePath("/comunidad");
 }
-
-

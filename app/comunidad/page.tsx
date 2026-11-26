@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ModerationForm from "@/components/community/ModerationForm";
+import PostPhotoComposer from "@/components/community/PostPhotoComposer";
+import FamilyPostImage from "@/components/community/FamilyPostImage";
 import { createClient } from "@/lib/supabase/server";
 
 import {
@@ -81,15 +83,17 @@ async function CommunityFeed() {
         redirect("/pendiente");
     }
 
-    // Identificar al administrador.
     const isAdmin = profile.role === "admin";
 
-    // Obtener publicaciones.
+    // Obtener publicaciones familiares.
     const { data: feedData, error: feedError } =
         await supabase.rpc("get_family_feed");
 
     if (feedError) {
-        console.error("Error del muro:", feedError.message);
+        console.error(
+            "Error del muro:",
+            feedError.message
+        );
 
         return (
             <p role="alert" className="text-red-400">
@@ -99,58 +103,102 @@ async function CommunityFeed() {
     }
 
     const posts = (feedData ?? []) as FamilyPost[];
-    const postIds = posts.map((post) => post.post_id);
+    const postIds = posts.map(
+        (post) => post.post_id
+    );
 
     let comments: FamilyComment[] = [];
     let reactions: FamilyReaction[] = [];
 
-    // Obtener comentarios y reacciones.
+    // Imagen asociada a cada publicación.
+    const postImages: Record<string, string> = {};
+
     if (postIds.length > 0) {
-        const [commentsResult, reactionsResult] =
-            await Promise.all([
-                supabase.rpc("get_family_post_comments", {
+        const [
+            commentsResult,
+            reactionsResult,
+            imagesResult,
+        ] = await Promise.all([
+            supabase.rpc(
+                "get_family_post_comments",
+                {
                     p_post_ids: postIds,
-                }),
+                }
+            ),
 
-                supabase
-                    .from("family_post_reactions")
-                    .select("post_id, user_id, reaction_type")
-                    .in("post_id", postIds),
-            ]);
+            supabase
+                .from("family_post_reactions")
+                .select(
+                    "post_id, user_id, reaction_type"
+                )
+                .in("post_id", postIds),
 
-        if (commentsResult.error || reactionsResult.error) {
+            supabase.rpc(
+                "get_family_post_images",
+                {
+                    p_post_ids: postIds,
+                }
+            ),
+        ]);
+
+        if (
+            commentsResult.error ||
+            reactionsResult.error ||
+            imagesResult.error
+        ) {
             console.error(
-                "Error de interacciones:",
+                "Error al cargar interacciones:",
                 commentsResult.error?.message,
-                reactionsResult.error?.message
+                reactionsResult.error?.message,
+                imagesResult.error?.message
             );
 
             return (
-                <p role="alert" className="text-red-400">
-                    No se pudieron cargar los comentarios
-                    y las reacciones.
+                <p
+                    role="alert"
+                    className="text-red-400"
+                >
+                    No se pudieron cargar los comentarios,
+                    reacciones o fotografías.
                 </p>
             );
         }
 
-        comments = (commentsResult.data ?? []) as FamilyComment[];
+        comments =
+            (commentsResult.data ?? []) as FamilyComment[];
 
-        reactions = (reactionsResult.data ?? []) as FamilyReaction[];
+        reactions =
+            (reactionsResult.data ?? []) as FamilyReaction[];
+
+        // Guardar la ruta de cada imagen.
+        const imageRows = (
+            imagesResult.data ?? []
+        ) as {
+            post_id: string;
+            image_path: string;
+        }[];
+
+        for (const row of imageRows) {
+            postImages[row.post_id] = row.image_path;
+        }
     }
 
     return (
         <div className="mx-auto max-w-2xl space-y-8">
 
-            {/* ===================================
-          1. CREAR PUBLICACIÓN
-      =================================== */}
+            {/* =====================================
+          1. PUBLICAR SOLO TEXTO
+      ===================================== */}
 
             <section className="rounded-2xl border border-[#d4af37]/20 bg-[#18171b] p-6">
                 <h2 className="mb-5 font-serif text-2xl text-[#e6c785]">
                     Compartir un momento
                 </h2>
 
-                <form action={createPost} className="space-y-4">
+                <form
+                    action={createPost}
+                    className="space-y-4"
+                >
                     <label
                         htmlFor="post-content"
                         className="block text-sm text-white/70"
@@ -181,9 +229,15 @@ async function CommunityFeed() {
                 </form>
             </section>
 
-            {/* ===================================
-          2. PUBLICACIONES
-      =================================== */}
+            {/* =====================================
+          2. PUBLICAR CON FOTOGRAFÍA
+      ===================================== */}
+
+            <PostPhotoComposer />
+
+            {/* =====================================
+          3. MURO FAMILIAR
+      ===================================== */}
 
             <section className="space-y-6">
                 <h2 className="font-serif text-2xl">
@@ -198,17 +252,24 @@ async function CommunityFeed() {
 
                 {posts.map((post) => {
                     const postComments = comments
-                        .filter((comment) => comment.post_id === post.post_id)
+                        .filter(
+                            (comment) =>
+                                comment.post_id === post.post_id
+                        )
                         .sort((a, b) =>
-                            a.created_at.localeCompare(b.created_at)
+                            a.created_at.localeCompare(
+                                b.created_at
+                            )
                         );
 
                     const postReactions = reactions.filter(
-                        (reaction) => reaction.post_id === post.post_id
+                        (reaction) =>
+                            reaction.post_id === post.post_id
                     );
 
                     const myReaction = postReactions.find(
-                        (reaction) => reaction.user_id === user.id
+                        (reaction) =>
+                            reaction.user_id === user.id
                     );
 
                     return (
@@ -217,7 +278,7 @@ async function CommunityFeed() {
                             className="rounded-2xl border border-white/10 bg-[#18171b] p-6"
                         >
 
-                            {/* AUTOR DE LA PUBLICACIÓN */}
+                            {/* AUTOR Y FECHA */}
 
                             <header className="mb-5">
                                 <h3 className="font-semibold text-[#e6c785]">
@@ -229,15 +290,25 @@ async function CommunityFeed() {
                                 </p>
                             </header>
 
-                            {/* CONTENIDO DE LA PUBLICACIÓN */}
+                            {/* TEXTO DE LA PUBLICACIÓN */}
 
                             <p className="whitespace-pre-wrap break-words leading-7 text-white/80">
                                 {post.content}
                             </p>
 
-                            {/* ===================================
-                  3. EDITAR PUBLICACIÓN PROPIA
-              =================================== */}
+                            {/* FOTOGRAFÍA DE LA PUBLICACIÓN */}
+
+                            {postImages[post.post_id] && (
+                                <FamilyPostImage
+                                    imagePath={
+                                        postImages[post.post_id]
+                                    }
+                                />
+                            )}
+
+                            {/* =====================================
+                  4. EDITAR PUBLICACIÓN PROPIA
+              ===================================== */}
 
                             {post.author_id === user.id && (
                                 <details className="mt-5">
@@ -280,19 +351,21 @@ async function CommunityFeed() {
                                 </details>
                             )}
 
-                            {/* ===================================
-                  4. REACCIONES
-              =================================== */}
+                            {/* =====================================
+                  5. REACCIONES
+              ===================================== */}
 
                             <div className="mt-6 flex flex-wrap gap-3 border-t border-white/10 pt-5">
                                 {reactionOptions.map((option) => {
                                     const count = postReactions.filter(
                                         (reaction) =>
-                                            reaction.reaction_type === option.value
+                                            reaction.reaction_type ===
+                                            option.value
                                     ).length;
 
                                     const selected =
-                                        myReaction?.reaction_type === option.value;
+                                        myReaction?.reaction_type ===
+                                        option.value;
 
                                     return (
                                         <form
@@ -316,7 +389,9 @@ async function CommunityFeed() {
                                                         : "rounded-full border border-white/15 px-4 py-2 text-sm text-white/60"
                                                 }
                                             >
-                                                {option.emoji} {option.label} {count}
+                                                {option.emoji}{" "}
+                                                {option.label}{" "}
+                                                {count}
                                             </button>
                                         </form>
                                     );
@@ -340,9 +415,9 @@ async function CommunityFeed() {
                                 )}
                             </div>
 
-                            {/* ===================================
-                  5. COMENTARIOS
-              =================================== */}
+                            {/* =====================================
+                  6. COMENTARIOS
+              ===================================== */}
 
                             <div className="mt-7 border-t border-white/10 pt-6">
                                 <h4 className="mb-5 font-semibold text-[#e6c785]">
@@ -368,15 +443,15 @@ async function CommunityFeed() {
                         </span>
                                             </div>
 
-                                            {/* TEXTO DEL COMENTARIO */}
+                                            {/* CONTENIDO DEL COMENTARIO */}
 
                                             <p className="whitespace-pre-wrap break-words text-sm text-white/80">
                                                 {comment.content}
                                             </p>
 
-                                            {/* ===================================
-                          6. EDITAR COMENTARIO PROPIO
-                      =================================== */}
+                                            {/* =====================================
+                          7. EDITAR COMENTARIO PROPIO
+                      ===================================== */}
 
                                             {comment.author_id === user.id && (
                                                 <details className="mt-3">
@@ -397,12 +472,16 @@ async function CommunityFeed() {
                                                         <input
                                                             type="hidden"
                                                             name="id"
-                                                            value={comment.comment_id}
+                                                            value={
+                                                                comment.comment_id
+                                                            }
                                                         />
 
                                                         <textarea
                                                             name="content"
-                                                            defaultValue={comment.content}
+                                                            defaultValue={
+                                                                comment.content
+                                                            }
                                                             required
                                                             maxLength={500}
                                                             rows={3}
@@ -429,7 +508,9 @@ async function CommunityFeed() {
                                                     <input
                                                         type="hidden"
                                                         name="commentId"
-                                                        value={comment.comment_id}
+                                                        value={
+                                                            comment.comment_id
+                                                        }
                                                     />
 
                                                     <button
@@ -441,16 +522,16 @@ async function CommunityFeed() {
                                                 </form>
                                             )}
 
-                                            {/* ===================================
-                          7. MODERAR COMENTARIO AJENO
-                          SOLO ADMINISTRADORES
-                      =================================== */}
+                                            {/* MODERAR COMENTARIO AJENO */}
 
                                             {isAdmin &&
-                                                comment.author_id !== user.id && (
+                                                comment.author_id !==
+                                                user.id && (
                                                     <ModerationForm
                                                         kind="comment"
-                                                        id={comment.comment_id}
+                                                        id={
+                                                            comment.comment_id
+                                                        }
                                                     />
                                                 )}
 
@@ -458,9 +539,9 @@ async function CommunityFeed() {
                                     ))}
                                 </div>
 
-                                {/* ===================================
-                    8. AGREGAR COMENTARIO
-                =================================== */}
+                                {/* =====================================
+                    8. CREAR COMENTARIO
+                ===================================== */}
 
                                 <form
                                     action={createComment}
@@ -498,9 +579,9 @@ async function CommunityFeed() {
                                 </form>
                             </div>
 
-                            {/* ===================================
+                            {/* =====================================
                   9. ELIMINAR PUBLICACIÓN PROPIA
-              =================================== */}
+              ===================================== */}
 
                             {post.author_id === user.id && (
                                 <form
@@ -522,10 +603,9 @@ async function CommunityFeed() {
                                 </form>
                             )}
 
-                            {/* ===================================
+                            {/* =====================================
                   10. MODERAR PUBLICACIÓN AJENA
-                  SOLO ADMINISTRADORES
-              =================================== */}
+              ===================================== */}
 
                             {isAdmin &&
                                 post.author_id !== user.id && (
