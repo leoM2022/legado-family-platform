@@ -11,7 +11,6 @@ export default async function AuthNav() {
         error: authError,
     } = await supabase.auth.getUser();
 
-    // Visitante sin sesión
     if (authError || !user) {
         return (
             <div className="flex items-center gap-3">
@@ -34,7 +33,6 @@ export default async function AuthNav() {
         );
     }
 
-    // Consultar el perfil del usuario
     const { data: profile } = await supabase
         .from("profiles")
         .select("approval_status, role")
@@ -43,6 +41,9 @@ export default async function AuthNav() {
 
     const approved = profile?.approval_status === "approved";
     const isAdmin = approved && profile?.role === "admin";
+
+    const linkClass =
+        "rounded-full border border-[#d4af37]/50 px-5 py-2 text-sm text-[#e6c785]";
 
     return (
         <div className="flex flex-wrap items-center gap-3">
@@ -55,41 +56,39 @@ export default async function AuthNav() {
             </Link>
 
             {isAdmin && (
-                <Link
-                    href="/admin/solicitudes"
-                    prefetch={false}
-                    className="rounded-full border border-[#d4af37]/50 px-5 py-2 text-sm text-[#e6c785]"
-                >
-                    Administración
-                </Link>
+                <>
+                    <Link
+                        href="/admin/solicitudes"
+                        prefetch={false}
+                        className={linkClass}
+                    >
+                        Administración
+                    </Link>
+
+                    <Link
+                        href="/admin/premios"
+                        prefetch={false}
+                        className={linkClass}
+                    >
+                        Gestionar ternas 🏆
+                    </Link>
+                </>
             )}
 
             {approved && (
-                <Link
-                    href="/familia"
-                    prefetch={false}
-                    className="rounded-full border border-[#d4af37]/50 px-5 py-2 text-sm text-[#e6c785]"
-                >
+                <Link href="/familia" prefetch={false} className={linkClass}>
                     Nuestra familia
                 </Link>
             )}
 
             {approved && (
-                <Link
-                    href="/cumpleanos"
-                    prefetch={false}
-                    className="rounded-full border border-[#d4af37]/50 px-5 py-2 text-sm text-[#e6c785]"
-                >
+                <Link href="/cumpleanos" prefetch={false} className={linkClass}>
                     Cumpleaños
                 </Link>
             )}
 
             {approved && (
-                <Link
-                    href="/comunidad"
-                    prefetch={false}
-                    className="rounded-full border border-[#d4af37]/50 px-5 py-2 text-sm text-[#e6c785]"
-                >
+                <Link href="/comunidad" prefetch={false} className={linkClass}>
                     Comunidad
                 </Link>
             )}
