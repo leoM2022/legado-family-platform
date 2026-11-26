@@ -18,7 +18,7 @@ async function getApprovedUser() {
 
     const { data: profile, error } = await supabase
         .from("profiles")
-        .select("approval_status")
+        .select("approval_status, role")
         .eq("id", user.id)
         .single();
 
@@ -26,7 +26,7 @@ async function getApprovedUser() {
         throw new Error("Tu cuenta no está aprobada.");
     }
 
-    return { supabase, user };
+    return { supabase, user, role: profile.role };
 }
 
 export async function createPost(formData: FormData) {
@@ -197,6 +197,103 @@ export async function removeReaction(formData: FormData) {
     if (error) {
         console.error("Error al quitar reacción:", error.message);
         throw new Error("No se pudo quitar la reacción.");
+    }
+
+    revalidatePath("/comunidad");
+}
+
+const UUID_PATTERN =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function parseContentTarget(formData: FormData) {
+    const kind = formData.get("kind");
+    const id = formData.get("id");
+
+    if (
+        (kind !== "post" && kind !== "comment") ||
+        typeof id !== "string" ||
+        !UUID_PATTERN.test(id)
+    ) {
+        throw new Error("Contenido inválido.");
+    }
+
+    return { kind, id };
+}
+
+// Editar contenido propio
+export async function editFamilyContent(
+    formData: FormData
+) {
+    const { kind, id } = parseContentTarget(formData);
+    const content = formData.get("content");
+
+    const maxLength = kind === "post" ? 1200 : 500;
+
+    if (
+        typeof content !== "string" ||
+        content.trim().length < 1 ||
+        content.trim().length > maxLength
+    ) {
+        throw new Error("El texto no cumple los límites.");
+    }
+
+    const { supabase } = await getApprovedUser();
+
+    const { error } = await supabase.rpc(
+        "edit_family_content",
+        {
+            p_kind: kind,
+            p_id: id,
+            p_content: content.trim(),
+        }
+    );
+
+    if (error) {
+        console.error("Error al editar:", error.message);
+        throw new Error(
+            "No se pudo editar el contenido. Comprobá tus permisos."
+        );
+    }
+
+    revalidatePath("/comunidad");
+}
+
+// Retirar contenido desde administración
+export async function moderateFamilyContent(
+    formData: FormData
+) {
+    const { kind, id } = parseContentTarget(formData);
+    const reason = formData.get("reason");
+
+    if (
+        typeof reason !== "string" ||
+        reason.trim().length < 5 ||
+        reason.trim().length > 200
+    ) {
+        throw new Error(
+            "Ingresá un motivo de entre 5 y 200 caracteres."
+        );
+    }
+
+    const { supabase, role } = await getApprovedUser();
+
+    if (role !== "admin") {
+        throw new Error("Acceso no autorizado.");
+    }
+
+    // La función SQL comprueba nuevamente el rol.
+    const { error } = await supabase.rpc(
+        "moderate_family_content",
+        {
+            p_kind: kind,
+            p_id: id,
+            p_reason: reason.trim(),
+        }
+    );
+
+    if (error) {
+        console.error("Error de moderación:", error.message);
+        throw new Error("No se pudo moderar el contenido.");
     }
 
     revalidatePath("/comunidad");
