@@ -1,8 +1,8 @@
-
 "use client";
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 interface LogoutButtonProps {
     compact?: boolean;
@@ -11,6 +11,7 @@ interface LogoutButtonProps {
 export default function LogoutButton({
                                          compact = false,
                                      }: LogoutButtonProps) {
+    const router = useRouter();
     const [loading, setLoading] = useState(false);
 
     async function logout() {
@@ -27,7 +28,8 @@ export default function LogoutButton({
 
         // Navegación completa para limpiar
         // el estado visual de la sesión.
-        window.location.assign("/login");
+        router.replace("/login");
+        router.refresh();
     }
 
     return (

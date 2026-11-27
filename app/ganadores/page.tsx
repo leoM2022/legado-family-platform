@@ -1,10 +1,9 @@
-
 import Link from "next/link";
 import { redirect } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/server";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { Suspense } from "react";
 
 type Winner = {
     category: string;
@@ -24,7 +23,7 @@ type Edition = {
     edition_status: string;
 };
 
-export default async function WinnersPage() {
+async function WinnersContent() {
     const supabase = await createClient();
 
     const {
@@ -189,5 +188,18 @@ export default async function WinnersPage() {
 
             <Footer />
         </div>
+    );
+}
+export default function WinnersPage() {
+    return (
+        <Suspense
+            fallback={
+                <main className="flex min-h-screen items-center justify-center bg-[#0b0b0d] text-[#e6c785]">
+                    <p>🏆 Cargando historial de ganadores...</p>
+                </main>
+            }
+        >
+            <WinnersContent />
+        </Suspense>
     );
 }

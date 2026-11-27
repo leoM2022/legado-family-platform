@@ -49,8 +49,10 @@ export default function StageView({
     const [screen, setScreen] =
         useState<Screen | null>(null);
 
-    const [videoUrl, setVideoUrl] =
-        useState("");
+    const [signedVideo, setSignedVideo] = useState<{
+        path: string;
+        url: string;
+    } | null>(null);
 
     const [error, setError] = useState("");
 
@@ -100,23 +102,29 @@ export default function StageView({
     useEffect(() => {
         let active = true;
 
-        setVideoUrl("");
-
-        if (!currentVideoPath) return;
-
-        void supabase.storage
-            .from("family-ceremony-media")
-            .createSignedUrl(currentVideoPath, 300)
-            .then(({ data, error: signError }) => {
-                if (active && !signError) {
-                    setVideoUrl(data?.signedUrl ?? "");
-                }
-            });
+        if (currentVideoPath) {
+            void supabase.storage
+                .from("family-ceremony-media")
+                .createSignedUrl(currentVideoPath, 300)
+                .then(({ data, error: signError }) => {
+                    if (active && !signError && data?.signedUrl) {
+                        setSignedVideo({
+                            path: currentVideoPath,
+                            url: data.signedUrl,
+                        });
+                    }
+                });
+        }
 
         return () => {
             active = false;
         };
     }, [currentVideoPath, supabase]);
+
+    const videoUrl =
+        currentVideoPath && signedVideo?.path === currentVideoPath
+            ? signedVideo.url
+            : "";
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center bg-[#09090c] px-8 py-16 text-center text-[#f5e5bd]">
