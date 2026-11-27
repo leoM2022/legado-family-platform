@@ -11,6 +11,7 @@ export default async function AuthNav() {
         error: authError,
     } = await supabase.auth.getUser();
 
+    // Usuario sin sesión.
     if (authError || !user) {
         return (
             <div className="flex items-center gap-3">
@@ -39,8 +40,11 @@ export default async function AuthNav() {
         .eq("id", user.id)
         .maybeSingle();
 
-    const approved = profile?.approval_status === "approved";
-    const isAdmin = approved && profile?.role === "admin";
+    const approved =
+        profile?.approval_status === "approved";
+
+    const isAdmin =
+        approved && profile?.role === "admin";
 
     const linkClass =
         "rounded-full border border-[#d4af37]/50 px-5 py-2 text-sm text-[#e6c785]";
@@ -55,6 +59,7 @@ export default async function AuthNav() {
                 {approved ? "Mi espacio" : "Estado de solicitud"}
             </Link>
 
+            {/* ADMINISTRACIÓN */}
             {isAdmin && (
                 <>
                     <Link
@@ -72,25 +77,52 @@ export default async function AuthNav() {
                     >
                         Gestionar ternas 🏆
                     </Link>
+
+                    <Link
+                        href="/admin/votaciones"
+                        prefetch={false}
+                        className={linkClass}
+                    >
+                        Control de votos
+                    </Link>
                 </>
             )}
 
+            {/* FUNCIONES PARA FAMILIARES APROBADOS */}
             {approved && (
-                <Link href="/familia" prefetch={false} className={linkClass}>
-                    Nuestra familia
-                </Link>
-            )}
+                <>
+                    <Link
+                        href="/votar"
+                        prefetch={false}
+                        className={linkClass}
+                    >
+                        Votar 🗳️
+                    </Link>
 
-            {approved && (
-                <Link href="/cumpleanos" prefetch={false} className={linkClass}>
-                    Cumpleaños
-                </Link>
-            )}
+                    <Link
+                        href="/familia"
+                        prefetch={false}
+                        className={linkClass}
+                    >
+                        Nuestra familia
+                    </Link>
 
-            {approved && (
-                <Link href="/comunidad" prefetch={false} className={linkClass}>
-                    Comunidad
-                </Link>
+                    <Link
+                        href="/cumpleanos"
+                        prefetch={false}
+                        className={linkClass}
+                    >
+                        Cumpleaños
+                    </Link>
+
+                    <Link
+                        href="/comunidad"
+                        prefetch={false}
+                        className={linkClass}
+                    >
+                        Comunidad
+                    </Link>
+                </>
             )}
 
             <LogoutButton compact />
