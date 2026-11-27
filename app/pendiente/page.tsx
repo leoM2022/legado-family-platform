@@ -62,12 +62,12 @@ async function PendingStatus() {
             </p>
 
             {approved && (
-                <a
+                <Link
                     href="/mi-espacio"
                     className="mt-8 inline-block rounded-full bg-[#d4af37] px-7 py-3 font-semibold text-black"
                 >
                     Entrar a mi espacio
-                </a>
+                </Link>
 
             )}
 

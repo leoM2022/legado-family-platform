@@ -1,8 +1,7 @@
-
+import CeremonyPauseControl from "@/components/ceremony/CeremonyPauseControl";
 import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/server";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -305,6 +304,7 @@ async function AdminContent() {
                                 <div className="mt-6 space-y-3 border-t border-white/10 pt-5">
                                     <h3 className="font-semibold">
                                         Controles de la gala
+                                        <CeremonyPauseControl editionId={edition.id} />
                                     </h3>
 
                                     {next &&

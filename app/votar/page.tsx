@@ -107,6 +107,10 @@ function organizeVotingRows(
     return Array.from(editions.values());
 }
 
+async function getServerTime(): Promise<number> {
+    return Date.now();
+}
+
 async function VotingContent() {
     const supabase = await createClient();
 
@@ -173,7 +177,7 @@ async function VotingContent() {
         );
     }
 
-    const now = Date.now();
+    const now = await getServerTime();
 
     return (
         <div className="space-y-12">
