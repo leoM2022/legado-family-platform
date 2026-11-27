@@ -6,12 +6,14 @@ interface FamilyAvatarProps {
     avatarPath: string | null;
     name: string;
     size?: number;
+    portrait?: boolean;
 }
 
 export default async function FamilyAvatar({
                                                avatarPath,
                                                name,
                                                size = 96,
+                                               portrait = false,
                                            }: FamilyAvatarProps) {
     let url: string | null = null;
 
@@ -29,8 +31,8 @@ export default async function FamilyAvatar({
 
     return (
         <div
-            className="mx-auto flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#d4af37]/40 bg-[#d4af37]/10"
-            style={{ width: size, height: size }}
+            className={portrait ? "gala-portrait-frame" : "mx-auto flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#d4af37]/40 bg-[#d4af37]/10"}
+            style={portrait ? undefined : { width: size, height: size }}
         >
             {url ? (
                 <Image
@@ -43,8 +45,8 @@ export default async function FamilyAvatar({
                 />
             ) : (
                 <span
-                    className="font-serif text-[#e6c785]"
-                    style={{ fontSize: size * 0.4 }}
+                    className={portrait ? "gala-portrait-initial" : "font-serif text-[#e6c785]"}
+                    style={portrait ? undefined : { fontSize: size * 0.4 }}
                 >
           {name.trim().charAt(0).toUpperCase()}
         </span>

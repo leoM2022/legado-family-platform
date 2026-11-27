@@ -1,3 +1,4 @@
+import SplitText from "@/components/ui/SplitText";
 
 import { Suspense } from "react";
 import Link from "next/link";
@@ -107,10 +108,9 @@ async function CeremonyContent({
 
     // Selección de ceremonia.
     return (
-        <main className="min-h-screen bg-[#09090c] px-6 py-16 text-center text-[#f5e5bd]">
-            <h1 className="font-serif text-4xl">
-                Ceremonia GoyaAwards
-            </h1>
+        <main className="gala-stage flex min-h-svh flex-col items-center justify-center px-6 py-16 text-center text-[#f5e5bd]">
+            <span aria-hidden="true" className="gala-stage-mark mb-5">✦</span>
+            <h1><SplitText text="Ceremonia GoyaAwards" /></h1>
 
             {editions.length === 0 ? (
                 <p className="mt-6">
@@ -122,7 +122,7 @@ async function CeremonyContent({
                         <Link
                             key={edition.edition_id}
                             href={`/ceremonia?edicion=${edition.edition_id}`}
-                            className="block rounded-xl border border-[#d4af37]/40 p-4"
+                            className="gala-panel gala-card block p-4"
                         >
                             {edition.edition_title} ·{" "}
                             {edition.edition_year}

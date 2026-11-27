@@ -1,3 +1,6 @@
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import SplitText from "@/components/ui/SplitText";
 
 import { Suspense } from "react";
 import Link from "next/link";
@@ -68,59 +71,59 @@ async function EditProfileContent() {
     };
 
     return (
-        <>
-            <div className="mb-10">
-                <p className="text-sm text-white/50">
-                    Nombre de cuenta: {profile.display_name}
+        <div className="grid items-start gap-6 lg:grid-cols-[1fr_2.1fr]">
+            <aside>
+                <p className="mb-4 text-sm text-white/70">
+                    Nombre de cuenta · {profile.display_name}
                 </p>
-            </div>
-            <AvatarUploader
-                initialPath={details?.avatar_path ?? null}
-            />
+                <AvatarUploader initialPath={details?.avatar_path ?? null} />
+            </aside>
             <ProfileEditor
                 key={details?.avatar_path ?? "sin-avatar"}
                 initialProfile={initialProfile}
             />
-        </>
+        </div>
     );
 }
 
 export default function EditProfilePage() {
     return (
-        <main className="min-h-screen bg-[#0b0b0d] px-6 py-16 text-white">
-            <div className="mx-auto max-w-3xl">
-                <Link
-                    href="/mi-espacio"
-                    className="text-sm text-white/60 hover:text-[#e6c785]"
-                >
-                    ← Volver a mi espacio
-                </Link>
+        <div className="gala-room">
+            <Navbar />
+            <main className="px-6 py-12">
+                <div className="mx-auto max-w-6xl">
+                    <Link
+                        href="/mi-espacio"
+                        className="text-sm text-white/60 hover:text-[#e6c785]"
+                    >
+                        ← Volver a mi espacio
+                    </Link>
 
-                <div className="mb-12 mt-10">
-                    <p className="mb-4 text-xs uppercase tracking-[0.3em] text-[#d4af37]">
-                        GoyaAwards · Mi perfil
-                    </p>
-
-                    <h1 className="font-serif text-4xl text-[#e6c785] sm:text-5xl">
-                        Editar mi perfil
-                    </h1>
-
-                    <p className="mt-5 text-white/60">
-                        Personalizá tus datos y elegí qué compartir
-                        con el resto de la familia.
-                    </p>
-                </div>
-
-                <Suspense
-                    fallback={
-                        <p className="text-[#e6c785]">
-                            Cargando información...
+                    <div className="gala-page-header mt-6">
+                        <p className="mb-4 text-xs uppercase tracking-[0.3em] text-[#d4af37]">
+                            GoyaAwards · Mi perfil
                         </p>
-                    }
-                >
-                    <EditProfileContent />
-                </Suspense>
-            </div>
-        </main>
+
+                        <h1 className="font-serif text-4xl text-[#e6c785] sm:text-5xl"><SplitText text="Editar mi perfil" /></h1>
+
+                        <p className="mt-5 text-white/60">
+                            Personalizá tus datos y elegí qué compartir
+                            con el resto de la familia.
+                        </p>
+                    </div>
+
+                    <Suspense
+                        fallback={
+                            <p className="text-[#e6c785]">
+                                Cargando información...
+                            </p>
+                        }
+                    >
+                        <EditProfileContent />
+                    </Suspense>
+                </div>
+            </main>
+            <Footer />
+        </div>
     );
 }

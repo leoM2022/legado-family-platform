@@ -84,7 +84,7 @@ export default function CeremonyMediaForm({
     return (
         <form
             action={saveCeremonyMedia}
-            className="mt-5 space-y-3 rounded-xl border border-white/15 p-4"
+            className="gala-live-desk mt-5 space-y-3"
         >
             <input
                 type="hidden"
@@ -97,6 +97,8 @@ export default function CeremonyMediaForm({
                 name="video_path"
                 value={path}
             />
+
+            <h4 className="gala-kicker">Guiones y video</h4>
 
             <label className="block text-sm">
                 Introducción de la terna
@@ -162,7 +164,7 @@ export default function CeremonyMediaForm({
             <button
                 type="submit"
                 disabled={busy}
-                className="block rounded-full bg-[#d4af37] px-5 py-2 font-semibold text-black disabled:opacity-50"
+                className="gala-button gala-button--gold"
             >
                 Guardar guiones y video
             </button>

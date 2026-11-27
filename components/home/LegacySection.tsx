@@ -1,9 +1,10 @@
+import SplitText from "@/components/ui/SplitText";
 
 export default function LegacySection() {
     return (
         <section
             id="legado"
-            className="mx-auto max-w-3xl scroll-mt-24 px-6 py-28 text-center"
+            className="gala-reveal mx-auto max-w-3xl scroll-mt-24 px-6 py-28 text-center"
         >
             <p
                 className="mb-6 text-4xl text-[#d4af37]"
@@ -16,9 +17,7 @@ export default function LegacySection() {
                 Nuestra historia
             </p>
 
-            <h2 className="font-serif text-4xl sm:text-5xl">
-                Un legado que permanece
-            </h2>
+            <h2 className="font-serif text-4xl sm:text-5xl"><SplitText text="Un legado que permanece" /></h2>
 
             <p className="mt-8 leading-8 text-white/65">
                 Las tradiciones mantienen vivos los recuerdos.

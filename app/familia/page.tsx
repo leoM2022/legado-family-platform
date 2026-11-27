@@ -1,3 +1,5 @@
+import FamilyRail from "@/components/ui/FamilyRail";
+import SplitText from "@/components/ui/SplitText";
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -53,7 +55,7 @@ async function FamilyDirectory() {
 
     if (members.length === 0) {
         return (
-            <div className="rounded-2xl border border-white/10 bg-[#18171b] p-10 text-center">
+            <div className="gala-panel gala-card p-10 text-center">
                 <p className="mb-5 text-4xl">🏠</p>
 
                 <h2 className="font-serif text-2xl text-[#e6c785]">
@@ -81,7 +83,7 @@ async function FamilyDirectory() {
                 {members.length} perfiles compartidos
             </p>
 
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <FamilyRail>
                 {members.map((member) => {
                     const name =
                         member.nickname || member.display_name;
@@ -90,61 +92,67 @@ async function FamilyDirectory() {
                         <Link
                             key={member.user_id}
                             href={`/familia/${member.user_id}`}
-                            className="group rounded-2xl border border-[#d4af37]/20 bg-[#18171b] p-8 text-center transition hover:border-[#d4af37]/70 hover:bg-[#211d1b]"
+                            className="group gala-panel gala-card p-8 text-center transition hover:border-[#d4af37]/70 hover:bg-[#211d1b]"
                         >
-                            <div className="mb-6">
+                            <div className="gala-family-photo">
                                 <FamilyAvatar
                                     avatarPath={member.avatar_path}
                                     name={name}
-                                    size={96}
+                                    portrait
+                                    size={640}
                                 />
                             </div>
 
-                            <h2 className="font-serif text-2xl text-[#e6c785]">
-                                {name}
-                            </h2>
+                            <div className="p-6">
+                                <h2 className="font-serif text-2xl text-[#e6c785]">
+                                    {name}
+                                </h2>
 
-                            {member.nickname && (
-                                <p className="mt-2 text-xs text-white/40">
-                                    {member.display_name}
+                                {member.nickname && (
+                                    <p className="mt-2 text-sm text-white/65">
+                                        {member.display_name}
+                                    </p>
+                                )}
+
+                                {member.current_status && (
+                                    <p className="mt-4 text-sm text-white/60">
+                                        {member.current_status}
+                                    </p>
+                                )}
+
+                                {member.birthday_day && member.birthday_month && (
+                                    <p className="mt-3 text-sm text-white/75">
+                                        Cumpleaños · {member.birthday_day}/{member.birthday_month}
+                                    </p>
+                                )}
+
+                                <p className="mt-6 text-sm text-[#e6c785] group-hover:underline">
+                                    Ver perfil
                                 </p>
-                            )}
-
-                            {member.current_status && (
-                                <p className="mt-4 text-sm text-white/60">
-                                    {member.current_status}
-                                </p>
-                            )}
-
-                            <p className="mt-6 text-sm text-[#e6c785] group-hover:underline">
-                                Visitar perfil →
-                            </p>
+                            </div>
                         </Link>
                     );
                 })}
-            </div>
+            </FamilyRail>
         </>
     );
 }
 
 export default function FamilyPage() {
     return (
-        <div className="min-h-screen bg-[#0b0b0d] text-white">
+        <div className="gala-room">
             <Navbar />
 
             <main className="mx-auto max-w-7xl px-6 py-20">
-                <header className="mb-14 text-center">
-                    <p className="mb-5 text-xs uppercase tracking-[0.3em] text-[#d4af37]">
-                        Comunidad GoyaAwards
+                <header className="gala-family-intro">
+                    <p className="gala-kicker mb-4">
+                        Álbum familiar
                     </p>
 
-                    <h1 className="font-serif text-5xl text-[#e6c785] sm:text-6xl">
-                        Nuestra familia
-                    </h1>
+                    <h1 className="font-serif text-[#fff0d3]"><SplitText text="Nuestra familia" /></h1>
 
-                    <p className="mt-6 text-white/60">
-                        Un lugar para conocernos y compartir
-                        nuestras historias.
+                    <p className="mt-4 max-w-xl text-lg text-white/75">
+                        Conocé los gustos, recuerdos y pequeñas historias que hacen única a nuestra familia.
                     </p>
                 </header>
 

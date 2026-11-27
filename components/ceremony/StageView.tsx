@@ -1,6 +1,8 @@
 
 "use client";
 
+import SplitText from "@/components/ui/SplitText";
+
 import {
     useEffect,
     useMemo,
@@ -127,8 +129,11 @@ export default function StageView({
             : "";
 
     return (
-        <main className="flex min-h-screen flex-col items-center justify-center bg-[#09090c] px-8 py-16 text-center text-[#f5e5bd]">
-            <p className="mb-8 text-xs uppercase tracking-[0.5em] text-[#d4af37]">
+        <main
+            className="gala-stage flex min-h-svh flex-col items-center justify-center px-7 py-12 text-center text-[#f5e5bd] sm:px-12"
+            data-phase={screen?.phase ?? "loading"}
+        >
+            <p className="gala-kicker">
                 GoyaAwards · Ceremonia familiar
             </p>
 
@@ -149,13 +154,8 @@ export default function StageView({
 
             {screen?.phase === "waiting" && (
                 <>
-                    <div className="mb-6 text-7xl">
-                        🏆
-                    </div>
-
-                    <h1 className="font-serif text-5xl">
-                        {screen.edition_title}
-                    </h1>
+                    <div aria-hidden="true" className="gala-stage-mark mb-6">✦</div>
+                    <h1><SplitText text={screen.edition_title} /></h1>
 
                     <p className="mt-6 text-xl text-white/60">
                         La ceremonia está por comenzar
@@ -172,28 +172,29 @@ export default function StageView({
                     "video",
                 ].includes(screen.phase) && (
                     <>
-                        <h1 className="font-serif text-4xl sm:text-6xl">
-                            {screen.category_title}
+                        <h1 key={screen.category_title}>
+                            <SplitText text={screen.category_title ?? ""} />
                         </h1>
 
                         {screen.phase === "nominees" && (
                             <>
-                                <p className="mt-6 max-w-3xl text-white/70">
+                                <p className="mt-5 max-w-3xl text-pretty text-lg text-white/75 sm:text-2xl">
                                     {screen.intro_script}
                                 </p>
 
-                                <div className="mt-10 grid w-full max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                <div className="mt-8 flex w-full max-w-6xl flex-wrap justify-center gap-4">
                                     {screen.nominees.map(
                                         (nominee, i) => (
                                             <div
                                                 key={i}
-                                                className="rounded-xl border border-[#d4af37]/30 bg-white/5 p-8"
+                                                className="gala-panel gala-nominee w-full max-w-lg flex-[1_1_14rem] p-5 sm:p-7"
+                                                style={{ animationDelay: `${Math.min(i, 8) * 90}ms` }}
                                             >
                                                 <div className="text-5xl">
                                                     {nominee.symbol}
                                                 </div>
 
-                                                <h2 className="mt-4 font-serif text-2xl">
+                                                <h2 className="mt-4 font-serif text-2xl sm:text-4xl">
                                                     {nominee.title}
                                                 </h2>
                                             </div>
@@ -214,21 +215,18 @@ export default function StageView({
                             "video",
                         ].includes(screen.phase) && (
                             <>
-                                <div className="mt-8 text-7xl">
-                                    🏆
-                                </div>
-
-                                <p className="mt-4 text-sm uppercase tracking-widest text-[#d4af37]">
-                                    Ganador
-                                </p>
-
-                                <h2 className="mt-3 font-serif text-5xl sm:text-7xl">
-                                    {screen.winner_title}
-                                </h2>
-
-                                <p className="mt-7 max-w-3xl text-xl text-white/70">
-                                    {screen.winner_script}
-                                </p>
+                                {screen.phase === "revealed" && (
+                                    <div className="gala-stage-winner" key={screen.category_title}>
+                                        <div aria-hidden="true" className="gala-stage-mark">✦</div>
+                                        <p className="gala-kicker mt-3">El Goya es para</p>
+                                        <h2 className="mt-3 font-serif text-5xl text-[#ffe8ae] sm:text-7xl">
+                                            <SplitText text={screen.winner_title ?? ""} />
+                                        </h2>
+                                        <p className="mx-auto mt-6 max-w-3xl text-pretty text-xl text-white/80">
+                                            {screen.winner_script}
+                                        </p>
+                                    </div>
+                                )}
 
                                 {screen.phase === "video" &&
                                     (videoUrl ? (
@@ -238,7 +236,8 @@ export default function StageView({
                                             playsInline
                                             preload="metadata"
                                             src={videoUrl}
-                                            className="mt-8 w-full max-w-3xl rounded-xl"
+                                            aria-label={`Video de ${screen.winner_title ?? "la gala"}`}
+                                            className="gala-nominee mt-5 aspect-video w-full max-w-5xl rounded-xl object-contain"
                                         />
                                     ) : (
                                         <p className="mt-5 text-white/60">
@@ -254,22 +253,17 @@ export default function StageView({
 
             {screen?.phase === "finished" && (
                 <>
-                    <div className="text-7xl">
-                        ✨
-                    </div>
-
-                    <h1 className="mt-6 font-serif text-5xl">
-                        Gracias por compartir esta gala
-                    </h1>
+                    <div aria-hidden="true" className="gala-stage-mark">✦</div>
+                    <h1 className="mt-5"><SplitText text="Gracias por compartir esta gala" /></h1>
 
                     <div className="mt-12 grid w-full max-w-4xl gap-3 sm:grid-cols-2">
                         {screen.published_winners.map(
                             (item, i) => (
                                 <div
                                     key={i}
-                                    className="rounded-xl border border-[#d4af37]/30 p-4"
+                                    className="gala-panel p-4"
                                 >
-                                    <p className="text-sm text-white/50">
+                                    <p className="gala-kicker">
                                         {item.category}
                                     </p>
 
@@ -299,13 +293,13 @@ export function RehearsalStage() {
     const [step, setStep] = useState(0);
 
     return (
-        <div className="min-h-screen bg-[#09090c] px-6 py-16 text-center text-[#f5e5bd]">
+        <div className="gala-stage min-h-svh px-6 py-16 text-center text-[#f5e5bd]">
             <p className="mb-6 text-xs uppercase tracking-widest text-[#d4af37]">
                 Modo ensayo · Sin datos reales
             </p>
 
             <h1 className="font-serif text-5xl">
-                GoyaAwards · Ensayo
+                <SplitText text="GoyaAwards · Ensayo" />
             </h1>
 
             {step === 0 && (

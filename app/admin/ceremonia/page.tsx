@@ -1,3 +1,5 @@
+import SubmitButton from "@/components/ui/SubmitButton";
+import SplitText from "@/components/ui/SplitText";
 import CeremonyPauseControl from "@/components/ceremony/CeremonyPauseControl";
 import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
@@ -97,12 +99,13 @@ function ControlButton({
                 value={command}
             />
 
-            <button
-                type="submit"
-                className="rounded-full border border-[#d4af37] px-5 py-2 text-sm text-[#e6c785]"
+            <SubmitButton
+                pendingLabel="Actualizando escenario…"
+                data-command={command}
+                className="gala-button gala-command"
             >
                 {children}
-            </button>
+            </SubmitButton>
         </form>
     );
 }
@@ -219,17 +222,16 @@ async function AdminContent() {
                 return (
                     <section
                         key={edition.id}
-                        className="rounded-2xl border border-[#d4af37]/30 bg-[#18171b] p-6"
+                        className="gala-panel gala-console-edition p-5 sm:p-7"
                     >
                         <h2 className="font-serif text-3xl text-[#e6c785]">
                             {edition.title}
                         </h2>
 
-                        <p className="mt-2 text-sm text-white/60">
-                            Estado: {edition.status}
-                            {" · "}
-                            Escenario: {session?.phase ?? "sin iniciar"}
-                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            <span className="gala-status-chip text-sm">Edición · {edition.status}</span>
+                            <span className="gala-status-chip text-sm">Escenario · {session?.phase ?? "sin iniciar"}</span>
+                        </div>
 
                         <div className="mt-4 flex flex-wrap gap-3">
                             {session && (
@@ -239,7 +241,7 @@ async function AdminContent() {
                                     href={`/ceremonia?edicion=${edition.id}`}
                                     className="rounded-full bg-[#d4af37] px-5 py-2 text-sm font-semibold text-black"
                                 >
-                                    Abrir escenario ↗
+                                    Abrir escenario
                                 </Link>
                             )}
 
@@ -249,7 +251,7 @@ async function AdminContent() {
                                 href="/ceremonia?ensayo=1"
                                 className="rounded-full border border-white/20 px-5 py-2 text-sm"
                             >
-                                Modo ensayo ↗
+                                Modo ensayo
                             </Link>
                         </div>
 
@@ -259,7 +261,7 @@ async function AdminContent() {
                             !prepared && (
                                 <form
                                     action={prepareCeremony}
-                                    className="mt-6 space-y-3"
+                                    className="gala-live-desk mt-6 space-y-3"
                                 >
                                     <input
                                         type="hidden"
@@ -267,17 +269,18 @@ async function AdminContent() {
                                         value={edition.id}
                                     />
 
-                                    <p className="text-sm text-white/60">
+                                    <h3 className="gala-kicker">Preparación de resultados</h3>
+                                    <p className="text-sm text-white/70">
                                         Congelar el recuento de votos.
                                         Es una operación definitiva.
                                     </p>
 
-                                    <button
-                                        className="rounded-full bg-[#d4af37] px-5 py-3 font-semibold text-black"
-                                        type="submit"
+                                    <SubmitButton
+                                        pendingLabel="Preparando resultados…"
+                                        className="gala-button gala-button--gold"
                                     >
                                         Preparar resultados definitivos
-                                    </button>
+                                    </SubmitButton>
                                 </form>
                             )}
 
@@ -287,7 +290,8 @@ async function AdminContent() {
                             !session &&
                             unresolved.length === 0 &&
                             edition.status === "closed" && (
-                                <div className="mt-6">
+                                <div className="gala-live-desk mt-6">
+                                    <h3 className="gala-kicker mb-3">Inicio de la gala</h3>
                                     <ControlButton
                                         editionId={edition.id}
                                         command="start"
@@ -301,60 +305,61 @@ async function AdminContent() {
 
                         {session &&
                             edition.status === "closed" && (
-                                <div className="mt-6 space-y-3 border-t border-white/10 pt-5">
-                                    <h3 className="font-semibold">
-                                        Controles de la gala
+                                <div className="gala-live-desk mt-6">
+                                    <h3 className="gala-kicker mb-4">Conducción en vivo</h3>
+                                    <div className="grid items-start gap-4 lg:grid-cols-[1.4fr_1fr]">
+                                        <div className="space-y-3">
+                                            {next &&
+                                                [
+                                                    "waiting",
+                                                    "revealed",
+                                                    "video",
+                                                ].includes(session.phase) && (
+                                                    <ControlButton
+                                                        editionId={edition.id}
+                                                        command="present"
+                                                        categoryId={next.id}
+                                                    >
+                                                        Presentar siguiente terna:{" "}
+                                                        {next.title}
+                                                    </ControlButton>
+                                                )}
+
+                                            {session.phase === "nominees" &&
+                                                active && (
+                                                    <ControlButton
+                                                        editionId={edition.id}
+                                                        command="reveal"
+                                                    >
+                                                        Abrir sobre: {active.title}
+                                                    </ControlButton>
+                                                )}
+
+                                            {session.phase === "revealed" &&
+                                                activeResult?.video_path && (
+                                                    <ControlButton
+                                                        editionId={edition.id}
+                                                        command="video"
+                                                    >
+                                                        Reproducir video del ganador
+                                                    </ControlButton>
+                                                )}
+
+                                            {revealedAll &&
+                                                [
+                                                    "revealed",
+                                                    "video",
+                                                ].includes(session.phase) && (
+                                                    <ControlButton
+                                                        editionId={edition.id}
+                                                        command="finish"
+                                                    >
+                                                        Finalizar gala y publicar historial
+                                                    </ControlButton>
+                                                )}
+                                        </div>
                                         <CeremonyPauseControl editionId={edition.id} />
-                                    </h3>
-
-                                    {next &&
-                                        [
-                                            "waiting",
-                                            "revealed",
-                                            "video",
-                                        ].includes(session.phase) && (
-                                            <ControlButton
-                                                editionId={edition.id}
-                                                command="present"
-                                                categoryId={next.id}
-                                            >
-                                                Presentar siguiente terna:{" "}
-                                                {next.title}
-                                            </ControlButton>
-                                        )}
-
-                                    {session.phase === "nominees" &&
-                                        active && (
-                                            <ControlButton
-                                                editionId={edition.id}
-                                                command="reveal"
-                                            >
-                                                Abrir sobre: {active.title}
-                                            </ControlButton>
-                                        )}
-
-                                    {session.phase === "revealed" &&
-                                        activeResult?.video_path && (
-                                            <ControlButton
-                                                editionId={edition.id}
-                                                command="video"
-                                            >
-                                                Reproducir video del ganador
-                                            </ControlButton>
-                                        )}
-
-                                    {revealedAll &&
-                                        [
-                                            "revealed",
-                                            "video",
-                                        ].includes(session.phase) && (
-                                            <ControlButton
-                                                editionId={edition.id}
-                                                command="finish"
-                                            >
-                                                Finalizar gala y publicar historial
-                                            </ControlButton>
-                                        )}
+                                    </div>
                                 </div>
                             )}
 
@@ -403,7 +408,7 @@ async function AdminContent() {
                                 return (
                                     <details
                                         key={category.id}
-                                        className="rounded-xl border border-white/15 p-4"
+                                        className="rounded-xl border border-white/15 bg-black/20 p-4"
                                     >
                                         <summary className="cursor-pointer font-semibold">
                                             {category.title}
@@ -439,7 +444,7 @@ async function AdminContent() {
                                             !session && (
                                                 <form
                                                     action={resolveCeremonyTie}
-                                                    className="mt-5 space-y-3"
+                                                    className="gala-live-desk mt-5 space-y-3"
                                                 >
                                                     <input
                                                         type="hidden"
@@ -447,6 +452,7 @@ async function AdminContent() {
                                                         value={category.id}
                                                     />
 
+                                                    <h4 className="gala-kicker">Desempate</h4>
                                                     <p className="text-sm">
                                                         Elegí entre los nominados
                                                         empatados con {maxVotes} votos:
@@ -485,12 +491,12 @@ async function AdminContent() {
                                                         className="w-full rounded-lg bg-black/30 p-3"
                                                     />
 
-                                                    <button
-                                                        type="submit"
-                                                        className="rounded-full bg-[#d4af37] px-5 py-2 font-semibold text-black"
+                                                    <SubmitButton
+                                                        pendingLabel="Guardando desempate…"
+                                                        className="gala-button gala-button--gold"
                                                     >
                                                         Resolver empate
-                                                    </button>
+                                                    </SubmitButton>
                                                 </form>
                                             )}
 
@@ -530,10 +536,10 @@ async function AdminContent() {
 
 export default function CeremonyAdminPage() {
     return (
-        <div className="min-h-screen bg-[#0b0b0d] text-white">
+        <div className="gala-room">
             <Navbar />
 
-            <main className="mx-auto max-w-5xl px-6 py-12">
+            <main className="mx-auto max-w-6xl px-6 py-12">
                 <Link
                     href="/admin/votaciones"
                     className="text-sm text-white/60"
@@ -541,9 +547,7 @@ export default function CeremonyAdminPage() {
                     ← Volver a votaciones
                 </Link>
 
-                <h1 className="my-8 font-serif text-4xl text-[#e6c785]">
-                    Consola del presentador
-                </h1>
+                <h1 className="my-8 font-serif text-[#f6e6ca]"><SplitText text="Consola del presentador" /></h1>
 
                 <p className="mb-8 text-white/60">
                     Prepará resultados, desempates, guiones y

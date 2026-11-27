@@ -1,3 +1,5 @@
+import SplitText from "@/components/ui/SplitText";
+import FamilyMoments from "@/components/profile/FamilyMoments";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -81,10 +83,10 @@ async function MemberProfile({
     ].filter((item) => item.value);
 
     return (
-        <article className="mx-auto max-w-2xl">
-            <div className="rounded-3xl border border-[#d4af37]/20 bg-[#18171b] p-8 sm:p-12">
-                <div className="text-center">
-                    <div className="mb-6">
+        <article className="mx-auto max-w-6xl">
+            <div className="gala-panel overflow-hidden">
+                <div className="gala-profile-banner flex flex-col items-start gap-6 border-b border-[#e6c785]/25 p-7 sm:flex-row sm:items-center sm:p-10">
+                    <div>
                         <FamilyAvatar
                             avatarPath={member.avatar_path}
                             name={name}
@@ -92,18 +94,21 @@ async function MemberProfile({
                         />
                     </div>
 
-                    <h1 className="font-serif text-4xl text-[#e6c785]">
-                        {name}
-                    </h1>
+                    <div>
+                        <p className="gala-kicker mb-2">Álbum familiar</p>
+                        <h1 className="font-serif text-4xl text-[#e6c785]">
+                            <SplitText text={name} />
+                        </h1>
 
-                    {member.nickname && (
-                        <p className="mt-3 text-white/50">
-                            {member.display_name}
-                        </p>
-                    )}
+                        {member.nickname && (
+                            <p className="mt-3 text-white/50">
+                                {member.display_name}
+                            </p>
+                        )}
+                    </div>
                 </div>
 
-                <div className="mt-10 border-t border-white/10 pt-8">
+                <div className="p-7 sm:p-10">
                     <h2 className="mb-6 font-serif text-2xl text-white">
                         Sobre mí
                     </h2>
@@ -114,9 +119,9 @@ async function MemberProfile({
                             información adicional.
                         </p>
                     ) : (
-                        <dl className="space-y-6">
+                        <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {visibleDetails.map((item) => (
-                                <div key={item.label}>
+                                <div key={item.label} className="rounded-lg border border-white/10 bg-black/20 p-4">
                                     <dt className="mb-2 text-xs uppercase tracking-wider text-[#d4af37]">
                                         {item.label}
                                     </dt>
@@ -133,12 +138,15 @@ async function MemberProfile({
                 {user.id === member.user_id && (
                     <Link
                         href="/mi-espacio/editar"
-                        className="mt-10 inline-block rounded-full border border-[#d4af37] px-6 py-3 text-sm text-[#e6c785]"
+                        className="gala-button mx-7 mb-7"
                     >
                         Editar mi perfil
                     </Link>
                 )}
             </div>
+            <Suspense fallback={<p className="mt-8">Cargando recuerdos…</p>}>
+                <FamilyMoments authorId={member.user_id} />
+            </Suspense>
         </article>
     );
 }
@@ -149,11 +157,11 @@ export default function FamilyMemberPage({
     params: Promise<{ id: string }>;
 }) {
     return (
-        <div className="min-h-screen bg-[#0b0b0d] text-white">
+        <div className="gala-room">
             <Navbar />
 
             <main className="px-6 py-16">
-                <div className="mx-auto mb-10 max-w-2xl">
+                <div className="mx-auto mb-10 max-w-6xl">
                     <Link
                         href="/familia"
                         className="text-sm text-white/60 hover:text-[#e6c785]"

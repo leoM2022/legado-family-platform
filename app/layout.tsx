@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./gala.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +29,7 @@ export default function RootLayout({
   return (
       <html
           lang="es"
+          data-scroll-behavior="smooth"
           className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       >
       <body className="min-h-full flex flex-col">

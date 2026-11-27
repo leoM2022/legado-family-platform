@@ -180,7 +180,7 @@ export default function ProfileEditor({
         <form onSubmit={handleSave} className="space-y-8">
 
             {/* Datos personales */}
-            <section className="rounded-2xl border border-[#d4af37]/20 bg-[#18171b] p-6 sm:p-8">
+            <section className="gala-panel gala-card p-6 sm:p-8">
                 <h2 className="mb-6 font-serif text-2xl text-[#e6c785]">
                     Sobre mí
                 </h2>
@@ -298,7 +298,7 @@ export default function ProfileEditor({
             </section>
 
             {/* Gustos */}
-            <section className="rounded-2xl border border-[#d4af37]/20 bg-[#18171b] p-6 sm:p-8">
+            <section className="gala-panel gala-card p-6 sm:p-8">
                 <h2 className="mb-6 font-serif text-2xl text-[#e6c785]">
                     Mis gustos y favoritos
                 </h2>
@@ -356,7 +356,7 @@ export default function ProfileEditor({
             </section>
 
             {/* Privacidad */}
-            <section className="rounded-2xl border border-[#d4af37]/20 bg-[#18171b] p-6 sm:p-8">
+            <section className="gala-panel gala-card p-6 sm:p-8">
                 <h2 className="font-serif text-2xl text-[#e6c785]">
                     Mi privacidad
                 </h2>

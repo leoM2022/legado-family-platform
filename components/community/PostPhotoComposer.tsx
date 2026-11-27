@@ -229,7 +229,7 @@ export default function PostPhotoComposer() {
     }
 
     return (
-        <section className="rounded-2xl border border-[#d4af37]/20 bg-[#18171b] p-6">
+        <section className="gala-panel p-6">
             <h2 className="mb-4 font-serif text-2xl text-[#e6c785]">
                 Publicar con fotografía
             </h2>
@@ -285,7 +285,7 @@ export default function PostPhotoComposer() {
                 <button
                     type="submit"
                     disabled={working || !file}
-                    className="rounded-full bg-[#d4af37] px-6 py-3 font-semibold text-black disabled:opacity-50"
+                    className="gala-button gala-button--gold"
                 >
                     {working
                         ? "Subiendo..."

@@ -1,10 +1,13 @@
 
 import Link from "next/link";
+import { connection } from "next/server";
+import AccountMenu from "./AccountMenu";
 
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/auth/LogoutButton";
 
 export default async function AuthNav() {
+    await connection();
     const supabase = await createClient();
 
     const {
@@ -14,11 +17,11 @@ export default async function AuthNav() {
 
     if (error || !user) {
         return (
-            <div className="flex items-center gap-3">
+            <div className="gala-guest">
                 <Link
                     href="/login"
                     prefetch={false}
-                    className="rounded-full border border-[#d4af37]/50 px-5 py-2 text-sm text-[#e6c785]"
+                    className="gala-button"
                 >
                     Iniciar sesión
                 </Link>
@@ -26,7 +29,7 @@ export default async function AuthNav() {
                 <Link
                     href="/registro"
                     prefetch={false}
-                    className="rounded-full bg-[#d4af37] px-5 py-2 text-sm font-semibold text-black"
+                    className="gala-button gala-button--gold"
                 >
                     Registrarse
                 </Link>
@@ -46,104 +49,44 @@ export default async function AuthNav() {
     const admin =
         approved && profile?.role === "admin";
 
-    const btn =
-        "rounded-full border border-[#d4af37]/50 px-5 py-2 text-sm text-[#e6c785]";
+    const familyLinks = [
+        ["/familia", "Nuestra familia"],
+        ["/comunidad", "Comunidad"],
+        ["/cumpleanos", "Cumpleaños"],
+        ["/votar", "Votar"],
+        ["/ganadores", "Ganadores"],
+        ["/ceremonia", "Ceremonia"],
+    ];
+
+    const adminLinks = [
+        ["/admin/solicitudes", "Solicitudes"],
+        ["/admin/premios", "Gestionar ternas"],
+        ["/admin/votaciones", "Control de votos"],
+        ["/admin/ceremonia", "Consola de gala"],
+    ];
 
     return (
-        <div className="flex flex-wrap items-center gap-3">
-            <Link
-                href={
-                    approved ? "/mi-espacio" : "/pendiente"
-                }
-                prefetch={false}
-                className="rounded-full bg-[#d4af37] px-5 py-2 text-sm font-semibold text-black"
-            >
-                {approved
-                    ? "Mi espacio"
-                    : "Estado de solicitud"}
+        <AccountMenu>
+            <Link className="gala-account-home" href={approved ? "/mi-espacio" : "/pendiente"} prefetch={false}>
+                {approved ? "Mi espacio" : "Estado de solicitud"}
             </Link>
-
-            {admin && (
-                <>
-                    <Link
-                        href="/admin/solicitudes"
-                        prefetch={false}
-                        className={btn}
-                    >
-                        Administración
-                    </Link>
-
-                    <Link
-                        href="/admin/premios"
-                        prefetch={false}
-                        className={btn}
-                    >
-                        Gestionar ternas 🏆
-                    </Link>
-
-                    <Link
-                        href="/admin/votaciones"
-                        prefetch={false}
-                        className={btn}
-                    >
-                        Control de votos
-                    </Link>
-
-                    <Link
-                        href="/admin/ceremonia"
-                        prefetch={false}
-                        className={btn}
-                    >
-                        Control de gala 🎬
-                    </Link>
-                </>
-            )}
-
             {approved && (
-                <>
-                    <Link
-                        href="/votar"
-                        prefetch={false}
-                        className={btn}
-                    >
-                        Votar 🗳️
-                    </Link>
-
-                    <Link
-                        href="/ganadores"
-                        prefetch={false}
-                        className={btn}
-                    >
-                        Ganadores
-                    </Link>
-
-                    <Link
-                        href="/familia"
-                        prefetch={false}
-                        className={btn}
-                    >
-                        Nuestra familia
-                    </Link>
-
-                    <Link
-                        href="/cumpleanos"
-                        prefetch={false}
-                        className={btn}
-                    >
-                        Cumpleaños
-                    </Link>
-
-                    <Link
-                        href="/comunidad"
-                        prefetch={false}
-                        className={btn}
-                    >
-                        Comunidad
-                    </Link>
-                </>
+                <div className="gala-menu-group">
+                    <p className="gala-kicker">Familia y premios</p>
+                    {familyLinks.map(([href, label]) => (
+                        <Link href={href} key={href} prefetch={false}>{label}</Link>
+                    ))}
+                </div>
             )}
-
+            {admin && (
+                <div className="gala-menu-group">
+                    <p className="gala-kicker">Administración</p>
+                    {adminLinks.map(([href, label]) => (
+                        <Link href={href} key={href} prefetch={false}>{label}</Link>
+                    ))}
+                </div>
+            )}
             <LogoutButton compact />
-        </div>
+        </AccountMenu>
     );
 }

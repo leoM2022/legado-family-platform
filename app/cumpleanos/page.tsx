@@ -1,3 +1,4 @@
+import SplitText from "@/components/ui/SplitText";
 
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
@@ -73,8 +74,43 @@ async function FamilyBirthdays() {
 
     const birthdays = (data ?? []) as Birthday[];
 
+    const todayLabel = new Intl.DateTimeFormat("en-CA", {
+        year: "numeric", month: "2-digit", day: "2-digit",
+        timeZone: "America/Argentina/Jujuy",
+    }).formatToParts(new Date());
+    const year = Number(todayLabel.find(({ type }) => type === "year")?.value);
+    const month = Number(todayLabel.find(({ type }) => type === "month")?.value);
+    const day = Number(todayLabel.find(({ type }) => type === "day")?.value);
+    const today = Date.UTC(year, month - 1, day);
+    const upcoming = birthdays.map((birthday) => {
+        let nextYear = year;
+        let nextDate = Date.UTC(nextYear, birthday.birthday_month - 1, birthday.birthday_day);
+        const isLeapBirthday = birthday.birthday_month === 2 && birthday.birthday_day === 29;
+        while (nextDate < today || (isLeapBirthday && new Date(nextDate).getUTCMonth() !== 1)) {
+            nextYear += 1;
+            nextDate = Date.UTC(nextYear, birthday.birthday_month - 1, birthday.birthday_day);
+        }
+        return { ...birthday, nextDate };
+    }).sort((a, b) => a.nextDate - b.nextDate).slice(0, 3);
+    const upcomingDate = new Intl.DateTimeFormat("es-AR", {
+        day: "numeric", month: "long", timeZone: "UTC",
+    });
+
     return (
         <>
+            {upcoming.length > 0 && (
+                <section className="gala-panel gala-profile-banner mb-8 p-6 sm:p-8">
+                    <h2 className="font-serif text-3xl text-[#e6c785]">Próximos cumpleaños</h2>
+                    <ul className="mt-5 grid gap-3 sm:grid-cols-3">
+                        {upcoming.map((birthday, index) => (
+                            <li key={index} className="rounded-lg border border-[#e6c785]/25 bg-black/25 p-4">
+                                <p className="gala-kicker">{birthday.nextDate === today ? "Hoy" : upcomingDate.format(birthday.nextDate)}</p>
+                                <p className="mt-2 text-lg">{birthday.family_name}</p>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
             <p className="mb-10 text-center text-sm text-white/50">
                 {birthdays.length} cumpleaños compartidos
             </p>
@@ -94,16 +130,13 @@ async function FamilyBirthdays() {
                     return (
                         <section
                             key={month}
-                            className="rounded-2xl border border-[#d4af37]/20 bg-[#18171b] p-6"
+                            className="gala-panel gala-card p-6"
                         >
                             <div className="mb-6 flex items-center justify-between border-b border-white/10 pb-4">
                                 <h2 className="font-serif text-2xl text-[#e6c785]">
                                     {month}
                                 </h2>
 
-                                <span className="text-sm text-white/40">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
                             </div>
 
                             {monthBirthdays.length === 0 ? (
@@ -125,9 +158,6 @@ async function FamilyBirthdays() {
                                                 <p className="font-medium text-white">
                                                     {birthday.family_name}
                                                 </p>
-                                                <p className="text-xs text-white/50">
-                                                    🎂 Cumpleaños
-                                                </p>
                                             </div>
                                         </li>
                                     ))}
@@ -143,18 +173,16 @@ async function FamilyBirthdays() {
 
 export default function BirthdaysPage() {
     return (
-        <div className="min-h-screen bg-[#0b0b0d] text-white">
+        <div className="gala-room">
             <Navbar />
 
             <main className="mx-auto max-w-7xl px-6 py-20">
-                <header className="mb-14 text-center">
+                <header className="gala-page-header">
                     <p className="mb-5 text-xs uppercase tracking-[0.3em] text-[#d4af37]">
                         Nuestra familia
                     </p>
 
-                    <h1 className="font-serif text-5xl text-[#e6c785] sm:text-6xl">
-                        Calendario de cumpleaños
-                    </h1>
+                    <h1 className="font-serif text-5xl text-[#e6c785] sm:text-6xl"><SplitText text="Calendario de cumpleaños" /></h1>
 
                     <p className="mx-auto mt-6 max-w-2xl text-white/60">
                         Cada fecha especial merece ser recordada.

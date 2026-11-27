@@ -1,3 +1,4 @@
+import SplitText from "@/components/ui/SplitText";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -108,26 +109,25 @@ async function WinnersContent() {
             return {
                 id: e.edition_id,
                 title: archive.title,
+                year: archive.year,
                 winners,
             };
         })
     );
 
     return (
-        <div className="min-h-screen bg-[#0b0b0d] text-white">
+        <div className="gala-room">
             <Navbar />
 
             <main className="mx-auto max-w-5xl px-6 py-16">
                 <Link
                     href="/mi-espacio"
-                    className="text-sm text-white/50"
+                    className="gala-kicker"
                 >
                     ← Volver
                 </Link>
 
-                <h1 className="my-10 font-serif text-4xl text-[#e6c785]">
-                    Historial de GoyaAwards
-                </h1>
+                <h1 className="my-10 font-serif text-4xl text-[#e6c785]"><SplitText text="Historial de GoyaAwards" /></h1>
 
                 {published.length === 0 && (
                     <p>
@@ -142,8 +142,9 @@ async function WinnersContent() {
                             archive && (
                                 <section
                                     key={archive.id}
-                                    className="mb-12 space-y-5"
+                                    className="mb-12 space-y-5 border-t border-[#e6c785]/25 pt-7"
                                 >
+                                    <p className="gala-kicker">Edición {archive.year}</p>
                                     <h2 className="font-serif text-3xl text-[#e6c785]">
                                         {archive.title}
                                     </h2>
@@ -153,18 +154,18 @@ async function WinnersContent() {
                                             (winner, i) => (
                                                 <article
                                                     key={i}
-                                                    className="rounded-xl border border-[#d4af37]/30 bg-[#18171b] p-5"
+                                                    className="gala-panel gala-card p-5"
                                                 >
-                                                    <p className="text-sm text-white/50">
+                                                    <p className="gala-kicker">
                                                         {winner.category}
                                                     </p>
 
                                                     <h3 className="mt-2 font-serif text-2xl">
-                                                        🏆 {winner.winner}
+                                                        {winner.winner}
                                                     </h3>
 
                                                     {winner.message && (
-                                                        <p className="mt-4 text-sm text-white/70">
+                                                        <p className="mt-4 whitespace-pre-wrap border-l border-[#e6c785]/40 pl-4 leading-relaxed text-white/75">
                                                             {winner.message}
                                                         </p>
                                                     )}
@@ -174,7 +175,7 @@ async function WinnersContent() {
                                                             src={winner.signedUrl}
                                                             controls
                                                             preload="none"
-                                                            className="mt-4 w-full rounded-lg"
+                                                            className="mt-4 aspect-video w-full rounded-lg bg-black object-contain"
                                                         />
                                                     )}
                                                 </article>

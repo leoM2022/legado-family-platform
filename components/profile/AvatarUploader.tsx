@@ -360,7 +360,7 @@ export default function AvatarUploader({
     }
 
     return (
-        <section className="mb-8 rounded-2xl border border-[#d4af37]/20 bg-[#18171b] p-6 text-center sm:p-8">
+        <section className="mb-8 gala-panel gala-card p-6 text-center sm:p-8">
             <h2 className="mb-6 font-serif text-2xl text-[#e6c785]">
                 Mi foto de perfil
             </h2>

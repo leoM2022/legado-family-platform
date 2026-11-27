@@ -1,6 +1,8 @@
 
 "use client";
 
+import SplitText from "@/components/ui/SplitText";
+
 import {
     useEffect,
     useMemo,
@@ -77,16 +79,14 @@ export default function CeremonySafetyOverlay({
     }
 
     return (
-        <div className="fixed inset-0 z-[100] flex min-h-screen flex-col items-center justify-center bg-[#09090c] px-8 text-center text-[#f5e5bd]">
-            <div className="mb-6 text-7xl">🏆</div>
+        <div role="status" className="gala-stage gala-stage-overlay inset-0 z-[100] flex min-h-svh flex-col items-center justify-center px-8 text-center text-[#f5e5bd]">
+            <div aria-hidden="true" className="gala-stage-mark mb-6">✦</div>
 
             <p className="mb-5 text-xs uppercase tracking-[0.4em] text-[#d4af37]">
                 GoyaAwards · Ceremonia familiar
             </p>
 
-            <h1 className="font-serif text-4xl sm:text-6xl">
-                {message}
-            </h1>
+            <h1 key={message}><SplitText text={message} /></h1>
 
             <p className="mt-7 max-w-xl text-white/60">
                 {disconnected

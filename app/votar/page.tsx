@@ -1,3 +1,5 @@
+import SubmitButton from "@/components/ui/SubmitButton";
+import SplitText from "@/components/ui/SplitText";
 
 import { Suspense } from "react";
 import Link from "next/link";
@@ -162,7 +164,7 @@ async function VotingContent() {
 
     if (editions.length === 0) {
         return (
-            <div className="rounded-2xl border border-white/10 bg-[#18171b] p-10 text-center">
+            <div className="gala-panel gala-card p-10 text-center">
                 <p className="mb-4 text-4xl">🏆</p>
 
                 <h2 className="font-serif text-2xl text-[#e6c785]">
@@ -190,7 +192,7 @@ async function VotingContent() {
                         key={edition.id}
                         className="space-y-6"
                     >
-                        <div className="rounded-2xl border border-[#d4af37]/20 bg-[#18171b] p-6">
+                        <div className="gala-panel gala-card p-6">
                             <h2 className="font-serif text-3xl text-[#e6c785]">
                                 {edition.title}
                             </h2>
@@ -220,7 +222,7 @@ async function VotingContent() {
                             return (
                                 <article
                                     key={category.id}
-                                    className="rounded-2xl border border-white/10 bg-[#18171b] p-6"
+                                    className="gala-panel gala-card p-6"
                                 >
                                     <h3 className="font-serif text-2xl text-[#e6c785]">
                                         {category.title}
@@ -234,7 +236,7 @@ async function VotingContent() {
 
                                     {/* VOTO YA REGISTRADO */}
                                     {category.myVoteId ? (
-                                        <div className="mt-6 rounded-xl border border-[#d4af37]/30 p-5">
+                                        <div role="status" className="mt-6 rounded-xl border border-[#d4af37]/40 bg-[#d4af37]/10 p-5">
                                             <p className="font-semibold text-[#e6c785]">
                                                 ✓ Tu voto está registrado
                                             </p>
@@ -272,7 +274,7 @@ async function VotingContent() {
                                                 {category.nominees.map((nominee) => (
                                                     <label
                                                         key={nominee.id}
-                                                        className="flex cursor-pointer items-start gap-4 rounded-xl border border-white/15 p-4 hover:border-[#d4af37]/50"
+                                                        className="gala-ballot flex cursor-pointer items-start gap-4 rounded-xl border border-white/15 p-4 hover:border-[#d4af37]/50"
                                                     >
                                                         <input
                                                             type="radio"
@@ -303,13 +305,13 @@ async function VotingContent() {
                                                 Podés votar una sola vez en esta terna.
                                             </p>
 
-                                            <button
-                                                type="submit"
+                                            <SubmitButton
+                                                pendingLabel="Registrando voto…"
                                                 disabled={!hasStarted}
-                                                className="rounded-full bg-[#d4af37] px-6 py-3 font-semibold text-black disabled:cursor-not-allowed disabled:opacity-40"
+                                                className="gala-button gala-button--gold w-full sm:w-auto"
                                             >
                                                 Confirmar mi voto
-                                            </button>
+                                            </SubmitButton>
                                         </form>
                                     )}
                                 </article>
@@ -324,10 +326,10 @@ async function VotingContent() {
 
 export default function VotingPage() {
     return (
-        <div className="min-h-screen bg-[#0b0b0d] text-white">
+        <div className="gala-room">
             <Navbar />
 
-            <main className="mx-auto max-w-4xl px-6 py-16">
+            <main className="mx-auto max-w-6xl px-6 py-16">
                 <Link
                     href="/mi-espacio"
                     className="text-sm text-white/60"
@@ -335,14 +337,12 @@ export default function VotingPage() {
                     ← Volver a mi espacio
                 </Link>
 
-                <header className="mb-12 mt-10 text-center">
+                <header className="gala-page-header mt-10">
                     <p className="mb-4 text-xs uppercase tracking-[0.3em] text-[#d4af37]">
                         GoyaAwards · Premiaciones familiares
                     </p>
 
-                    <h1 className="font-serif text-5xl text-[#e6c785]">
-                        Tu voto cuenta
-                    </h1>
+                    <h1 className="font-serif text-5xl text-[#e6c785]"><SplitText text="Tu voto cuenta" /></h1>
 
                     <p className="mt-5 text-white/60">
                         Elegí a tus nominados favoritos.
