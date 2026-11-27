@@ -1,5 +1,6 @@
 
 import Link from "next/link";
+
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/auth/LogoutButton";
 
@@ -8,11 +9,10 @@ export default async function AuthNav() {
 
     const {
         data: { user },
-        error: authError,
+        error,
     } = await supabase.auth.getUser();
 
-    // Usuario sin sesión.
-    if (authError || !user) {
+    if (error || !user) {
         return (
             <div className="flex items-center gap-3">
                 <Link
@@ -43,29 +43,32 @@ export default async function AuthNav() {
     const approved =
         profile?.approval_status === "approved";
 
-    const isAdmin =
+    const admin =
         approved && profile?.role === "admin";
 
-    const linkClass =
+    const btn =
         "rounded-full border border-[#d4af37]/50 px-5 py-2 text-sm text-[#e6c785]";
 
     return (
         <div className="flex flex-wrap items-center gap-3">
             <Link
-                href={approved ? "/mi-espacio" : "/pendiente"}
+                href={
+                    approved ? "/mi-espacio" : "/pendiente"
+                }
                 prefetch={false}
                 className="rounded-full bg-[#d4af37] px-5 py-2 text-sm font-semibold text-black"
             >
-                {approved ? "Mi espacio" : "Estado de solicitud"}
+                {approved
+                    ? "Mi espacio"
+                    : "Estado de solicitud"}
             </Link>
 
-            {/* ADMINISTRACIÓN */}
-            {isAdmin && (
+            {admin && (
                 <>
                     <Link
                         href="/admin/solicitudes"
                         prefetch={false}
-                        className={linkClass}
+                        className={btn}
                     >
                         Administración
                     </Link>
@@ -73,7 +76,7 @@ export default async function AuthNav() {
                     <Link
                         href="/admin/premios"
                         prefetch={false}
-                        className={linkClass}
+                        className={btn}
                     >
                         Gestionar ternas 🏆
                     </Link>
@@ -81,28 +84,43 @@ export default async function AuthNav() {
                     <Link
                         href="/admin/votaciones"
                         prefetch={false}
-                        className={linkClass}
+                        className={btn}
                     >
                         Control de votos
+                    </Link>
+
+                    <Link
+                        href="/admin/ceremonia"
+                        prefetch={false}
+                        className={btn}
+                    >
+                        Control de gala 🎬
                     </Link>
                 </>
             )}
 
-            {/* FUNCIONES PARA FAMILIARES APROBADOS */}
             {approved && (
                 <>
                     <Link
                         href="/votar"
                         prefetch={false}
-                        className={linkClass}
+                        className={btn}
                     >
                         Votar 🗳️
                     </Link>
 
                     <Link
+                        href="/ganadores"
+                        prefetch={false}
+                        className={btn}
+                    >
+                        Ganadores
+                    </Link>
+
+                    <Link
                         href="/familia"
                         prefetch={false}
-                        className={linkClass}
+                        className={btn}
                     >
                         Nuestra familia
                     </Link>
@@ -110,7 +128,7 @@ export default async function AuthNav() {
                     <Link
                         href="/cumpleanos"
                         prefetch={false}
-                        className={linkClass}
+                        className={btn}
                     >
                         Cumpleaños
                     </Link>
@@ -118,7 +136,7 @@ export default async function AuthNav() {
                     <Link
                         href="/comunidad"
                         prefetch={false}
-                        className={linkClass}
+                        className={btn}
                     >
                         Comunidad
                     </Link>
