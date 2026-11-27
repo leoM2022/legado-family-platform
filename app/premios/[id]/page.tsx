@@ -10,7 +10,7 @@ import NomineeCard from "@/components/awards/NomineeCard";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-    title: "Nominados | GoyaAwards",
+    title: "Nominados | Legado",
 };
 
 interface AwardDetailProps {
@@ -74,7 +74,7 @@ async function AwardDetails({ params }: AwardDetailProps) {
                     </Link>
 
                     <p className="mt-14 text-xs uppercase tracking-[0.35em] text-[#d4af37]">
-                        GoyaAwards 2026 · Categoría{" "}
+                        Legado 2026 · Categoría{" "}
                         {String(category.display_order).padStart(2, "0")}
                     </p>
 
@@ -164,7 +164,7 @@ export default function AwardDetailPage({
                 </Suspense>
             </main>
 
-            <Footer />
+            <Footer demo />
         </div>
     );
 }

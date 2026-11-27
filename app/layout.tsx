@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GoyaAwards | Premios y recuerdos familiares",
+  title: "Legado | Historias y recuerdos familiares",
   description:
-      "GoyaAwards: una plataforma para celebrar historias, recuerdos y tradiciones familiares.",
+      "Legado es un espacio privado para compartir recuerdos, fotos y cumpleaños, y celebrar una premiación familiar.",
 };
 
 export default function RootLayout({

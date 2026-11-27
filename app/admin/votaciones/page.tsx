@@ -338,7 +338,7 @@ export default function AdminVotingPage() {
 
                 <header className="mb-12 mt-10">
                     <p className="mb-4 text-xs uppercase tracking-[0.3em] text-[#d4af37]">
-                        GoyaAwards · Administración
+                        Legado · Administración
                     </p>
 
                     <h1 className="font-serif text-4xl text-[#e6c785]">

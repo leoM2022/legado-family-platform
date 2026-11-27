@@ -83,7 +83,7 @@ export default function CeremonySafetyOverlay({
             <div aria-hidden="true" className="gala-stage-mark mb-6">✦</div>
 
             <p className="mb-5 text-xs uppercase tracking-[0.4em] text-[#d4af37]">
-                GoyaAwards · Ceremonia familiar
+                Legado · Ceremonia familiar
             </p>
 
             <h1 key={message}><SplitText text={message} /></h1>

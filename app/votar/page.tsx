@@ -339,7 +339,7 @@ export default function VotingPage() {
 
                 <header className="gala-page-header mt-10">
                     <p className="mb-4 text-xs uppercase tracking-[0.3em] text-[#d4af37]">
-                        GoyaAwards · Premiaciones familiares
+                        Legado · Premiaciones familiares
                     </p>
 
                     <h1 className="font-serif text-5xl text-[#e6c785]"><SplitText text="Tu voto cuenta" /></h1>

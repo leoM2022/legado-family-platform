@@ -55,7 +55,7 @@ async function PendingStatus() {
 
             <p className="mt-4 leading-7 text-white/60">
                 {approved
-                    ? "Tu cuenta está autorizada para acceder a GoyaAwards."
+                    ? "Tu cuenta está autorizada para acceder a Legado."
                     : rejected
                         ? "Tu solicitud no fue aprobada. Consultá con el administrador."
                         : "Tu cuenta está esperando la aprobación del administrador familiar."}

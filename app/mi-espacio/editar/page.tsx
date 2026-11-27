@@ -101,7 +101,7 @@ export default function EditProfilePage() {
 
                     <div className="gala-page-header mt-6">
                         <p className="mb-4 text-xs uppercase tracking-[0.3em] text-[#d4af37]">
-                            GoyaAwards · Mi perfil
+                            Legado · Mi perfil
                         </p>
 
                         <h1 className="font-serif text-4xl text-[#e6c785] sm:text-5xl"><SplitText text="Editar mi perfil" /></h1>

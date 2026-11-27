@@ -165,7 +165,7 @@ export default function AdminRequestsPage() {
 
                 <div className="my-14">
                     <p className="mb-5 text-xs uppercase tracking-[0.3em] text-[#d4af37]">
-                        GoyaAwards · Administración
+                        Legado · Administración
                     </p>
 
                     <h1 className="font-serif text-4xl sm:text-6xl">

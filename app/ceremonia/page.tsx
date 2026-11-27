@@ -110,7 +110,7 @@ async function CeremonyContent({
     return (
         <main className="gala-stage flex min-h-svh flex-col items-center justify-center px-6 py-16 text-center text-[#f5e5bd]">
             <span aria-hidden="true" className="gala-stage-mark mb-5">✦</span>
-            <h1><SplitText text="Ceremonia GoyaAwards" /></h1>
+            <h1><SplitText text="Ceremonia Legado" /></h1>
 
             {editions.length === 0 ? (
                 <p className="mt-6">
@@ -143,7 +143,7 @@ export default function CeremonyPage({
             fallback={
                 <main className="flex min-h-screen items-center justify-center bg-[#09090c] px-6 text-[#e6c785]">
                     <p className="text-center">
-                        🏆 Preparando GoyaAwards...
+                        🏆 Preparando Legado...
                     </p>
                 </main>
             }

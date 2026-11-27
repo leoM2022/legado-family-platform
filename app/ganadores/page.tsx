@@ -1,3 +1,4 @@
+import GalaEmptyState from "@/components/ui/GalaEmptyState";
 import SplitText from "@/components/ui/SplitText";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -127,12 +128,12 @@ async function WinnersContent() {
                     ← Volver
                 </Link>
 
-                <h1 className="my-10 font-serif text-4xl text-[#e6c785]"><SplitText text="Historial de GoyaAwards" /></h1>
+                <h1 className="my-10 font-serif text-4xl text-[#e6c785]"><SplitText text="Historial de Legado" /></h1>
 
                 {published.length === 0 && (
-                    <p>
-                        Todavía no hay ceremonias publicadas.
-                    </p>
+                    <GalaEmptyState title="El telón aún no se abrió">
+                        <p>Los ganadores, sus mensajes y videos aparecerán acá cuando se publique la primera ceremonia.</p>
+                    </GalaEmptyState>
                 )}
 
                 {archives

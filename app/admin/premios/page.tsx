@@ -104,7 +104,7 @@ function EditionForm({
                     maxLength={120}
                     required
                     defaultValue={edition?.title ?? ""}
-                    placeholder="GoyaAwards 2027"
+                    placeholder="Legado 2027"
                     className={fieldClass}
                 />
             </div>
@@ -641,7 +641,7 @@ export default function AdminAwardsPage() {
 
                 <header className="mb-12 mt-10">
                     <p className="mb-4 text-xs uppercase tracking-[0.3em] text-[#d4af37]">
-                        GoyaAwards · Administración
+                        Legado · Administración
                     </p>
 
                     <h1 className="font-serif text-4xl text-[#e6c785]">

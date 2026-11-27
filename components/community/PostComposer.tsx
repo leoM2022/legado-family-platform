@@ -2,26 +2,25 @@
 "use client";
 
 import {
+    useEffect,
     useRef,
     useState,
+    type ChangeEvent,
     type FormEvent,
 } from "react";
 
+import Image from "next/image";
+import { createPost } from "@/app/comunidad/actions";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const BUCKET = "family-post-images";
 const MAX_ORIGINAL_BYTES = 10 * 1024 * 1024;
 const MAX_STORED_BYTES = 2 * 1024 * 1024;
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-async function compressPhoto(file: File): Promise<Blob> {
-    const allowed = [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-    ];
-
-    if (!allowed.includes(file.type)) {
+function validatePhoto(file: File) {
+    if (!PHOTO_TYPES.includes(file.type)) {
         throw new Error("Solo JPG, PNG o WebP.");
     }
 
@@ -30,6 +29,10 @@ async function compressPhoto(file: File): Promise<Blob> {
             "La imagen original supera los 10 MB."
         );
     }
+}
+
+async function compressPhoto(file: File): Promise<Blob> {
+    validatePhoto(file);
 
     const image = await createImageBitmap(file);
 
@@ -100,15 +103,40 @@ async function compressPhoto(file: File): Promise<Blob> {
     }
 }
 
-export default function PostPhotoComposer() {
+export default function PostComposer() {
     const router = useRouter();
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [content, setContent] = useState("");
-    const [file, setFile] = useState<File | null>(null);
+    const [attachment, setAttachment] = useState<{ file: File; preview: string } | null>(null);
     const [working, setWorking] = useState(false);
     const [notice, setNotice] = useState("");
+    const [errorMessage, setErrorMessage] = useState("");
+    const preview = attachment?.preview;
+
+    useEffect(() => () => {
+        if (preview) URL.revokeObjectURL(preview);
+    }, [preview]);
+
+    function clearPhoto() {
+        setAttachment(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+
+    function choosePhoto(event: ChangeEvent<HTMLInputElement>) {
+        const selected = event.target.files?.[0];
+        if (!selected) return;
+        setNotice("");
+        setErrorMessage("");
+        try {
+            validatePhoto(selected);
+            setAttachment({ file: selected, preview: URL.createObjectURL(selected) });
+        } catch (error) {
+            clearPhoto();
+            setErrorMessage(error instanceof Error ? error.message : "No se pudo adjuntar la foto.");
+        }
+    }
 
     async function handleSubmit(
         event: FormEvent<HTMLFormElement>
@@ -117,16 +145,11 @@ export default function PostPhotoComposer() {
 
         if (working) return;
 
-        if (!file) {
-            setNotice("Elegí una foto para esta publicación.");
-            return;
-        }
-
         if (
             content.trim().length < 1 ||
             content.trim().length > 1200
         ) {
-            setNotice(
+            setErrorMessage(
                 "Escribí un texto de entre 1 y 1200 caracteres."
             );
             return;
@@ -134,6 +157,23 @@ export default function PostPhotoComposer() {
 
         setWorking(true);
         setNotice("");
+
+        setErrorMessage("");
+        const file = attachment?.file;
+        if (!file) {
+            try {
+                const data = new FormData();
+                data.set("content", content);
+                await createPost(data);
+                setContent("");
+                setNotice("Publicación compartida.");
+            } catch {
+                setErrorMessage("No se pudo publicar el texto. Volvé a intentarlo.");
+            } finally {
+                setWorking(false);
+            }
+            return;
+        }
 
         const supabase = createClient();
         let uploadedPath: string | null = null;
@@ -193,13 +233,8 @@ export default function PostPhotoComposer() {
             uploadedPath = null;
 
             setContent("");
-            setFile(null);
-
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
-
-            setNotice("¡Publicación con foto creada!");
+            clearPhoto();
+            setNotice("Publicación con foto compartida.");
 
             router.refresh();
         } catch (error) {
@@ -218,7 +253,7 @@ export default function PostPhotoComposer() {
                 }
             }
 
-            setNotice(
+            setErrorMessage(
                 error instanceof Error
                     ? error.message
                     : "Ocurrió un error."
@@ -229,77 +264,38 @@ export default function PostPhotoComposer() {
     }
 
     return (
-        <section className="gala-panel p-6">
-            <h2 className="mb-4 font-serif text-2xl text-[#e6c785]">
-                Publicar con fotografía
-            </h2>
-
-            <form
-                onSubmit={handleSubmit}
-                className="space-y-4"
-            >
-                <label
-                    htmlFor="photo-post-text"
-                    className="block text-sm text-white/70"
-                >
-                    Texto de la publicación
-                </label>
-
-                <textarea
-                    id="photo-post-text"
-                    value={content}
-                    onChange={(event) =>
-                        setContent(event.target.value)
-                    }
-                    required
-                    maxLength={1200}
-                    rows={3}
-                    className="w-full rounded-xl border border-white/15 bg-[#0b0b0d] p-3 text-white"
+        <section className="gala-panel p-4 sm:p-6" aria-labelledby="community-composer">
+            <h2 id="community-composer" className="mb-3 font-serif text-2xl text-[#fff0d3]">Compartir un momento</h2>
+            <form onSubmit={handleSubmit} aria-busy={working} className="space-y-3">
+                <label htmlFor="community-post-text" className="sr-only">Texto de la publicación</label>
+                <textarea id="community-post-text" name="content" value={content}
+                    onChange={(event) => setContent(event.target.value)}
+                    placeholder="¿Qué querés compartir con tu familia?"
+                    required maxLength={1200} rows={3} disabled={working}
+                    className="block w-full resize-y rounded-xl border border-white/15 bg-black/30 p-3 text-white placeholder:text-white/55"
                 />
-
-                <label
-                    htmlFor="photo-post-file"
-                    className="block text-sm text-white/70"
-                >
-                    Fotografía (JPG, PNG o WebP; hasta 10 MB)
-                </label>
-
-                <input
-                    id="photo-post-file"
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    disabled={working}
-                    onChange={(event) =>
-                        setFile(event.target.files?.[0] ?? null)
-                    }
-                    className="block w-full text-sm text-white/70"
-                />
-
-                <p className="text-xs text-white/50">
-                    La fotografía se compartirá con familiares
-                    aprobados. Se convierte a WebP y se guarda
-                    en un bucket privado.
-                </p>
-
-                <button
-                    type="submit"
-                    disabled={working || !file}
-                    className="gala-button gala-button--gold"
-                >
-                    {working
-                        ? "Subiendo..."
-                        : "Publicar con foto"}
-                </button>
-
-                {notice && (
-                    <p
-                        role="status"
-                        className="text-sm text-[#e6c785]"
-                    >
-                        {notice}
-                    </p>
+                <input ref={fileInputRef} type="file" accept={PHOTO_TYPES.join(",")}
+                    aria-label="Elegir fotografía" onChange={choosePhoto} disabled={working} className="hidden" />
+                {preview && (
+                    <div className="flex min-w-0 flex-wrap items-center gap-3 rounded-xl border border-[#e6c785]/20 bg-black/25 p-2">
+                        <Image src={preview} alt="Vista previa de la fotografía" width={96} height={72}
+                            unoptimized className="h-16 w-20 shrink-0 rounded-lg object-cover" />
+                        <span className="min-w-0 flex-1 wrap-break-word text-sm text-white/75">{attachment?.file.name}</span>
+                        <button type="button" className="gala-button" disabled={working} onClick={clearPhoto}>Quitar foto</button>
+                    </div>
                 )}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <button type="button" onClick={() => fileInputRef.current?.click()} disabled={working}
+                        aria-describedby="community-photo-rules" className="gala-button">
+                        {attachment ? "Cambiar foto" : "Adjuntar foto"}
+                    </button>
+                    <button type="submit" disabled={working || !content.trim()} className="gala-button gala-button--gold">
+                        {working ? "Publicando…" : "Publicar"}
+                    </button>
+                </div>
+                <p id="community-photo-rules" className="text-xs text-white/65">JPG, PNG o WebP, hasta 10 MB.</p>
+                {errorMessage && <p role="alert" className="text-sm text-red-300">{errorMessage}</p>}
+                {notice && <p role="status" className="text-sm text-[#e6c785]">{notice}</p>}
             </form>
         </section>
     );

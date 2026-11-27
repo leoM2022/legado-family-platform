@@ -54,8 +54,6 @@ export default async function AuthNav() {
         ["/comunidad", "Comunidad"],
         ["/cumpleanos", "Cumpleaños"],
         ["/votar", "Votar"],
-        ["/ganadores", "Ganadores"],
-        ["/ceremonia", "Ceremonia"],
     ];
 
     const adminLinks = [
@@ -63,6 +61,8 @@ export default async function AuthNav() {
         ["/admin/premios", "Gestionar ternas"],
         ["/admin/votaciones", "Control de votos"],
         ["/admin/ceremonia", "Consola de gala"],
+        ["/ceremonia", "Ceremonia"],
+        ["/ganadores", "Ganadores"],
     ];
 
     return (

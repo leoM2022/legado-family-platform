@@ -1,9 +1,9 @@
 
-# GoyaAwards — Guía para Codex
+# Legado — Guía para Codex
 
 ## 1. Contexto
 
-GoyaAwards es una plataforma privada para una familia,
+Legado es una plataforma privada para una familia,
 con perfiles, comunidad, fotografías, cumpleaños,
 nominaciones, votaciones y premiaciones anuales.
 
@@ -152,7 +152,7 @@ no son las ternas familiares privadas.
 ## 7. Prioridades del frontend
 
 1. Diseñar un Navbar compacto y adaptable.
-2. Unificar la experiencia visual de GoyaAwards.
+2. Unificar la experiencia visual de Legado.
 3. Rediseñar la comunidad y sus publicaciones.
 4. Mejorar perfiles y páginas familiares.
 5. Rediseñar nominaciones y votaciones.

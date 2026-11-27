@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, type ReactNode } from "react";
 
 export default function AccountMenu({ children }: { children: ReactNode }) {
@@ -29,7 +30,7 @@ export default function AccountMenu({ children }: { children: ReactNode }) {
             }}
         >
             <summary ref={trigger} className="gala-button gala-account-trigger">
-                <span className="gala-account-icon" aria-hidden="true">✦</span>
+                <Image className="gala-account-icon" src="/icon.svg" width={22} height={22} alt="" unoptimized />
                 Mi cuenta
             </summary>
             <div

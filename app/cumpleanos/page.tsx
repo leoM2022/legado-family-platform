@@ -1,3 +1,8 @@
+import BirthdayCalendar from "@/components/birthdays/BirthdayCalendar";
+import FamilyAvatar from "@/components/profile/FamilyAvatar";
+import type { FamilyMember } from "@/types/family";
+import Link from "next/link";
+import type { ReactNode } from "react";
 import SplitText from "@/components/ui/SplitText";
 
 import { Suspense } from "react";
@@ -13,20 +18,7 @@ interface Birthday {
     birthday_month: number;
 }
 
-const months = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
-];
+type CalendarBirthday = Birthday & { profile?: FamilyMember };
 
 async function FamilyBirthdays() {
     const supabase = await createClient();
@@ -57,118 +49,79 @@ async function FamilyBirthdays() {
         redirect("/pendiente");
     }
 
-    // Consultar solo cumpleaños autorizados.
-    const { data, error } = await supabase.rpc(
-        "get_family_birthdays"
-    );
+    const [birthdaysResult, directoryResult] = await Promise.all([
+        supabase.rpc("get_family_birthdays"),
+        supabase.rpc("get_family_directory"),
+    ]);
 
-    if (error) {
-        console.error("Error de calendario:", error.message);
-
-        return (
-            <p role="alert" className="text-center text-red-400">
-                No se pudo cargar el calendario familiar.
-            </p>
-        );
+    if (birthdaysResult.error) {
+        console.error("Error de calendario:", birthdaysResult.error.message);
+        return <p role="alert" className="gala-panel p-5 text-red-300">No se pudo cargar el calendario familiar.</p>;
     }
 
-    const birthdays = (data ?? []) as Birthday[];
+    const groups = new Map<string, CalendarBirthday[]>();
+    for (const birthday of (birthdaysResult.data ?? []) as Birthday[]) {
+        const key = `${birthday.birthday_month - 1}:${birthday.birthday_day}`;
+        const group = groups.get(key) ?? [];
+        group.push(birthday);
+        groups.set(key, group);
+    }
 
-    const todayLabel = new Intl.DateTimeFormat("en-CA", {
-        year: "numeric", month: "2-digit", day: "2-digit",
+    // El directorio autoriza por separado el perfil, el cumpleaños y la foto.
+    // Cada registro del directorio ocupa una entrada del mismo nombre y fecha.
+    for (const member of (directoryResult.error ? [] : (directoryResult.data ?? [])) as FamilyMember[]) {
+        if (!member.birthday_day || !member.birthday_month) continue;
+        const entries = groups.get(`${member.birthday_month - 1}:${member.birthday_day}`);
+        const entry = entries?.find((birthday) => !birthday.profile &&
+            birthday.family_name === (member.nickname ?? member.display_name));
+        if (entry) entry.profile = member;
+    }
+
+    const parts = new Intl.DateTimeFormat("es-AR", {
+        year: "numeric", month: "numeric", day: "numeric",
         timeZone: "America/Argentina/Jujuy",
     }).formatToParts(new Date());
-    const year = Number(todayLabel.find(({ type }) => type === "year")?.value);
-    const month = Number(todayLabel.find(({ type }) => type === "month")?.value);
-    const day = Number(todayLabel.find(({ type }) => type === "day")?.value);
-    const today = Date.UTC(year, month - 1, day);
-    const upcoming = birthdays.map((birthday) => {
-        let nextYear = year;
-        let nextDate = Date.UTC(nextYear, birthday.birthday_month - 1, birthday.birthday_day);
-        const isLeapBirthday = birthday.birthday_month === 2 && birthday.birthday_day === 29;
-        while (nextDate < today || (isLeapBirthday && new Date(nextDate).getUTCMonth() !== 1)) {
-            nextYear += 1;
-            nextDate = Date.UTC(nextYear, birthday.birthday_month - 1, birthday.birthday_day);
-        }
-        return { ...birthday, nextDate };
-    }).sort((a, b) => a.nextDate - b.nextDate).slice(0, 3);
-    const upcomingDate = new Intl.DateTimeFormat("es-AR", {
-        day: "numeric", month: "long", timeZone: "UTC",
-    });
+    const today = {
+        year: Number(parts.find(({ type }) => type === "year")?.value),
+        month: Number(parts.find(({ type }) => type === "month")?.value) - 1,
+        day: Number(parts.find(({ type }) => type === "day")?.value),
+    };
 
-    return (
-        <>
-            {upcoming.length > 0 && (
-                <section className="gala-panel gala-profile-banner mb-8 p-6 sm:p-8">
-                    <h2 className="font-serif text-3xl text-[#e6c785]">Próximos cumpleaños</h2>
-                    <ul className="mt-5 grid gap-3 sm:grid-cols-3">
-                        {upcoming.map((birthday, index) => (
-                            <li key={index} className="rounded-lg border border-[#e6c785]/25 bg-black/25 p-4">
-                                <p className="gala-kicker">{birthday.nextDate === today ? "Hoy" : upcomingDate.format(birthday.nextDate)}</p>
-                                <p className="mt-2 text-lg">{birthday.family_name}</p>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
-            <p className="mb-10 text-center text-sm text-white/50">
-                {birthdays.length} cumpleaños compartidos
-            </p>
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {months.map((month, index) => {
-                    const monthBirthdays = birthdays
-                        .filter(
-                            (birthday) =>
-                                birthday.birthday_month === index + 1
-                        )
-                        .sort(
-                            (a, b) =>
-                                a.birthday_day - b.birthday_day
-                        );
-
-                    return (
-                        <section
-                            key={month}
-                            className="gala-panel gala-card p-6"
-                        >
-                            <div className="mb-6 flex items-center justify-between border-b border-white/10 pb-4">
-                                <h2 className="font-serif text-2xl text-[#e6c785]">
-                                    {month}
-                                </h2>
-
+    const days: Record<string, { names: string[]; cards: ReactNode }> = {};
+    for (const [key, entries] of groups) {
+        days[key] = {
+            names: entries.map((entry) => entry.family_name),
+            cards: (
+                <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {entries.map(({ family_name, profile }, index) => (
+                        <li key={profile?.user_id ?? index} className="flex min-w-0 items-center gap-3 rounded-xl border border-[#e6c785]/20 bg-black/25 p-3">
+                            <div className="shrink-0">
+                                <FamilyAvatar name={family_name} avatarPath={profile?.avatar_path ?? null} size={48} />
                             </div>
+                            <div className="min-w-0">
+                                <p className="wrap-break-word font-medium">{family_name}</p>
+                                {profile && <Link href={`/familia/${profile.user_id}`} className="mt-1 inline-block text-sm text-[#e6c785] underline underline-offset-4">Ver perfil</Link>}
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            ),
+        };
+    }
 
-                            {monthBirthdays.length === 0 ? (
-                                <p className="text-sm text-white/40">
-                                    Sin cumpleaños compartidos.
-                                </p>
-                            ) : (
-                                <ul className="space-y-4">
-                                    {monthBirthdays.map((birthday, i) => (
-                                        <li
-                                            key={`${birthday.birthday_day}-${i}`}
-                                            className="flex items-center gap-4"
-                                        >
-                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#d4af37]/10 font-serif text-xl text-[#e6c785]">
-                                                {birthday.birthday_day}
-                                            </div>
+    const todayDate = Date.UTC(today.year, today.month, today.day);
+    const upcoming = Array.from(groups.values()).flatMap((entries) => entries.map((birthday) => {
+        const month = birthday.birthday_month - 1;
+        const day = birthday.birthday_day;
+        let year = today.year;
+        let date = Date.UTC(year, month, day);
+        while (date < todayDate || (month === 1 && day === 29 && new Date(date).getUTCMonth() !== month)) {
+            date = Date.UTC(++year, month, day);
+        }
+        return { name: birthday.family_name, month, day, date, year };
+    })).sort((a, b) => a.date - b.date).slice(0, 3);
 
-                                            <div>
-                                                <p className="font-medium text-white">
-                                                    {birthday.family_name}
-                                                </p>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </section>
-                    );
-                })}
-            </div>
-        </>
-    );
+    return <BirthdayCalendar today={today} days={days} upcoming={upcoming} />;
 }
 
 export default function BirthdaysPage() {
@@ -176,18 +129,16 @@ export default function BirthdaysPage() {
         <div className="gala-room">
             <Navbar />
 
-            <main className="mx-auto max-w-7xl px-6 py-20">
+            <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
                 <header className="gala-page-header">
                     <p className="mb-5 text-xs uppercase tracking-[0.3em] text-[#d4af37]">
                         Nuestra familia
                     </p>
 
-                    <h1 className="font-serif text-5xl text-[#e6c785] sm:text-6xl"><SplitText text="Calendario de cumpleaños" /></h1>
+                    <h1 className="font-serif text-5xl text-[#e6c785] sm:text-6xl"><SplitText text="Cumpleaños familiares" /></h1>
 
-                    <p className="mx-auto mt-6 max-w-2xl text-white/60">
-                        Cada fecha especial merece ser recordada.
-                        Celebramos juntos a quienes forman parte
-                        de nuestra familia.
+                    <p className="mt-4 max-w-2xl text-white/75">
+                        Consultá las fechas que nuestra familia eligió compartir.
                     </p>
                 </header>
 

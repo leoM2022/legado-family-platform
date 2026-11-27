@@ -87,7 +87,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                     href="/"
                     className="font-serif text-3xl text-[#e6c785]"
                 >
-                    GoyaAwards
+                    Legado
                 </Link>
 
                 <h1 className="mt-8 font-serif text-3xl text-white">

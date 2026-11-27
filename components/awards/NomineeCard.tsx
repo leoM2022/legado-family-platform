@@ -38,7 +38,7 @@ export default function NomineeCard({
 
                 <div className="mt-7 border-t border-white/10 pt-5">
                     <p className="text-xs uppercase tracking-widest text-[#d4af37]">
-                        GoyaAwards · Nominación oficial
+                        Legado · Nominación oficial
                     </p>
                 </div>
             </div>

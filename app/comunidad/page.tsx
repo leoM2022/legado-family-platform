@@ -6,12 +6,14 @@ import { redirect } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ModerationForm from "@/components/community/ModerationForm";
-import PostPhotoComposer from "@/components/community/PostPhotoComposer";
+import PostComposer from "@/components/community/PostComposer";
+import FamilyAvatar from "@/components/profile/FamilyAvatar";
+import GalaEmptyState from "@/components/ui/GalaEmptyState";
+import type { FamilyMember } from "@/types/family";
 import FamilyPostImage from "@/components/community/FamilyPostImage";
 import { createClient } from "@/lib/supabase/server";
 
 import {
-    createPost,
     deletePost,
     createComment,
     deleteComment,
@@ -87,8 +89,15 @@ async function CommunityFeed() {
     const isAdmin = profile.role === "admin";
 
     // Obtener publicaciones familiares.
-    const { data: feedData, error: feedError } =
-        await supabase.rpc("get_family_feed");
+    const [{ data: feedData, error: feedError }, directory] = await Promise.all([
+        supabase.rpc("get_family_feed"),
+        supabase.rpc("get_family_directory"),
+    ]);
+    const avatars = new Map(
+        ((directory.error ? [] : (directory.data ?? [])) as FamilyMember[]).map(
+            (member) => [member.user_id, member.avatar_path]
+        )
+    );
 
     if (feedError) {
         console.error(
@@ -185,69 +194,18 @@ async function CommunityFeed() {
     }
 
     return (
-        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)]">
+        <div className="space-y-7">
+            <PostComposer />
 
-            <div className="min-w-0 space-y-4">
-
-                <section className="gala-panel gala-card p-6">
-                    <h2 className="mb-5 font-serif text-2xl text-[#e6c785]">
-                        Compartir un momento
-                    </h2>
-
-                    <form
-                        action={createPost}
-                        className="space-y-4"
-                    >
-                        <label
-                            htmlFor="post-content"
-                            className="block text-sm text-white/70"
-                        >
-                            ¿Qué querés compartir?
-                        </label>
-
-                        <textarea
-                            id="post-content"
-                            name="content"
-                            required
-                            maxLength={1200}
-                            rows={4}
-                            placeholder="Escribí algo para tu familia..."
-                            className="w-full rounded-xl border border-white/15 bg-[#0b0b0d] p-4 text-white"
-                        />
-
-                        <p className="text-xs text-white/40">
-                            Publicación visible para familiares aprobados.
-                        </p>
-
-                        <button
-                            type="submit"
-                            className="gala-button gala-button--gold"
-                        >
-                            Publicar
-                        </button>
-                    </form>
-                </section>
-
-                {/* =====================================
-              2. PUBLICAR CON FOTOGRAFÍA
-          ===================================== */}
-
-                <PostPhotoComposer />
-            </div>
-
-            {/* =====================================
-          3. MURO FAMILIAR
-      ===================================== */}
-
-            <section className="min-w-0 space-y-6">
+            <section className="min-w-0 space-y-4">
                 <h2 className="font-serif text-2xl">
                     Publicaciones recientes
                 </h2>
 
                 {posts.length === 0 && (
-                    <p className="text-white/50">
-                        Todavía no hay publicaciones familiares.
-                    </p>
+                    <GalaEmptyState title="El muro está por comenzar">
+                        <p>Todavía no hay publicaciones. Podés compartir el primer recuerdo desde arriba.</p>
+                    </GalaEmptyState>
                 )}
 
                 {posts.map((post) => {
@@ -275,23 +233,23 @@ async function CommunityFeed() {
                     return (
                         <article
                             key={post.post_id}
-                            className="gala-panel gala-card p-6"
+                            className="gala-panel p-4 sm:p-6"
                         >
 
                             {/* AUTOR Y FECHA */}
 
                             <header className="mb-5 flex items-center gap-3 border-b border-white/10 pb-4">
-                                <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-full bg-[#e6c785]/15 font-serif text-xl text-[#e6c785]">
-                                    {post.author_name.trim().charAt(0).toUpperCase()}
-                                </span>
+                                <div className="shrink-0">
+                                    <FamilyAvatar name={post.author_name} avatarPath={avatars.get(post.author_id) ?? null} size={44} />
+                                </div>
                                 <div>
                                     <h3 className="font-semibold text-[#e6c785]">
                                         {post.author_name}
                                     </h3>
 
-                                    <p className="mt-1 text-xs text-white/40">
+                                    <time dateTime={post.created_at} className="mt-1 block text-sm text-white/65">
                                         {formatDate(post.created_at)}
-                                    </p>
+                                    </time>
                                 </div>
                             </header>
 
@@ -630,13 +588,13 @@ async function CommunityFeed() {
 
 export default function CommunityPage() {
     return (
-        <div className="min-h-screen bg-[#0b0d0d] text-white">
+        <div className="gala-room">
             <Navbar />
 
-            <main className="mx-auto max-w-7xl px-6 py-12">
+            <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
                 <header className="gala-page-header">
                     <p className="mb-5 text-xs uppercase tracking-[0.3em] text-[#d4af37]">
-                        Comunidad GoyaAwards
+                        Comunidad Legado
                     </p>
 
                     <h1 className="font-serif text-5xl text-[#e6c785]"><SplitText text="Nuestro espacio familiar" /></h1>

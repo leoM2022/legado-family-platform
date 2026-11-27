@@ -134,7 +134,7 @@ export default function StageView({
             data-phase={screen?.phase ?? "loading"}
         >
             <p className="gala-kicker">
-                GoyaAwards · Ceremonia familiar
+                Legado · Ceremonia familiar
             </p>
 
             {error && (
@@ -299,7 +299,7 @@ export function RehearsalStage() {
             </p>
 
             <h1 className="font-serif text-5xl">
-                <SplitText text="GoyaAwards · Ensayo" />
+                <SplitText text="Legado · Ensayo" />
             </h1>
 
             {step === 0 && (
